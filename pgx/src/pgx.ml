@@ -1303,6 +1303,7 @@ module Make (Thread : IO) = struct
         in
         loop acc (row::rows) `Rows
       | (`Row_desc |  `Rows ), Message_in.CommandComplete _ ->
+        let rows = List.rev rows in
         loop (rows::acc) [] `Row_desc
       | `Row_desc, Message_in.RowDescription _ -> loop acc rows `Rows
       | _, Message_in.ReadyForQuery _ ->
