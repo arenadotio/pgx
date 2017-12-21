@@ -1,0 +1,15 @@
+# http://editorconfig.org
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+max_line_length = 80
+
+# Makefiles only support tab indents
+[Makefile]
+indent_style = tab
