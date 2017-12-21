@@ -1293,7 +1293,7 @@ module Make (Thread : IO) = struct
       | _, Message_in.CopyData row ->
         loop acc ([row |> deserialize_string |> Value.of_string]::rows) state
       | _, Message_in.CopyDone ->
-        loop ((List.rev rows)::acc) [] state
+        loop acc rows state
       | `Rows, Message_in.DataRow row ->
         let row =
           List.map (Option.bind (fun v ->
