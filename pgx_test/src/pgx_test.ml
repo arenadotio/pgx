@@ -144,6 +144,15 @@ module Make_tests (IO : Pgx.IO) = struct
               ; [[Some "2"]]
               ; [[Some "3"]]] )
         )
+      ; "query - multiple single query", (fun () ->
+          with_conn (fun dbh ->
+            simple_query dbh "select 1 union all select 2 union all select 3"
+            >>| assert_equal
+            ~printer:pretty_print_string_option_list_list_list
+              [[ [Some "1"]
+               ; [Some "2"]
+               ; [Some "3"]]] )
+        )
       ; "query - empty", (fun () ->
           with_conn (fun dbh ->
             simple_query dbh "" >>|
