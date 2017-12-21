@@ -1,0 +1,8 @@
+(jbuild_version 1)
+
+(library
+ ((name pgx_lwt)
+  (public_name pgx_lwt)
+  (wrapped false)
+  (libraries (lwt lwt.unix pgx))
+  (preprocess (pps (ppx_jane ppx_driver.runner)))))

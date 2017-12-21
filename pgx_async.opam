@@ -1,0 +1,22 @@
+opam-version: "1.2"
+version: "0.1"
+maintainer: "silver-snakes@arena.io"
+homepage: "https://github.com/arenadotio/pgx"
+dev-repo: "https://github.com/arenadotio/pgx.git"
+bug-reports: "https://github.com/arenadotio/pgx/issues"
+
+build: [jbuilder build]
+build-test: [jbuilder runtest]
+install: [jbuilder install]
+remove: [jbuilder uninstall]
+
+depends: [
+  "async" {= "v0.9.1"}
+  "pgx"
+  "ppx_jane"
+
+  "base64" {test}
+  "ounit" {test}
+]
+
+available: [ocaml-version >= "4.04.2"]

@@ -1,0 +1,8 @@
+(jbuild_version 1)
+
+(library
+ ((name pgx_async)
+  (public_name pgx_async)
+  (wrapped false)
+  (libraries (async pgx))
+  (preprocess (pps (ppx_jane ppx_driver.runner)))))

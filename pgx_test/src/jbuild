@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(library
+ ((name pgx_test)
+  (wrapped false)
+  (libraries (base64 pgx oUnit))
+  (preprocess (pps (ppx_jane ppx_driver.runner)))))

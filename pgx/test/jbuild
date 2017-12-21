@@ -1,0 +1,11 @@
+(jbuild_version 1)
+
+(executables
+ ((names (test_pgx_value))
+  (libraries (pgx oUnit))
+	(preprocess (pps (ppx_jane ppx_driver.runner)))))
+
+(alias
+ ((name runtest)
+  (deps (test_pgx_value.exe))
+ (action (run ${<}))))

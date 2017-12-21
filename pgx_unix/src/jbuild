@@ -1,0 +1,8 @@
+(jbuild_version 1)
+
+(library
+ ((name pgx_unix)
+  (public_name pgx_unix)
+  (wrapped false)
+  (libraries (pgx))
+  (preprocess (pps (ppx_jane ppx_driver.runner)))))
