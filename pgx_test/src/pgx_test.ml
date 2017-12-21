@@ -283,14 +283,14 @@ module Make_tests (IO : Pgx.IO) = struct
       ; "copy out simple query", (fun () ->
           with_temp_db (fun dbh ~db_name:_ ->
             simple_query dbh
-              ("CREATE TABLE tennis_greats ( \
-                name            varchar(40), \
-                grand_slams     integer); \
-                INSERT INTO tennis_greats VALUES \
-                ('Roger Federer', 19), \
-                ('Rafael Nadal', 15); \
-                COPY tennis_greats TO STDOUT (DELIMITER '|')")
-            >>| assert_equal [[];[];[[Some "Roger Federer|19\n"];[Some "Rafael Nadal|15\n"]];[]])
+              "CREATE TABLE tennis_greats ( \
+               name            varchar(40), \
+               grand_slams     integer); \
+               INSERT INTO tennis_greats VALUES \
+               ('Roger Federer', 19), \
+               ('Rafael Nadal', 15); \
+               COPY tennis_greats TO STDOUT (DELIMITER '|')"
+            >>| assert_equal [[];[];[[Some "Roger Federer|19\n"];[Some "Rafael Nadal|15\n"]]])
         )
       ; "copy out extended query", (fun () ->
           with_temp_db (fun dbh ~db_name:_ ->
