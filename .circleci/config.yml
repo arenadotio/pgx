@@ -1,0 +1,36 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: ocaml/opam:ubuntu-17.04_ocaml-4.04.2
+        environment:
+          PGUSER: pgx
+          PGDATABASE: pgx-test
+          PGHOST: 127.0.0.1
+          TERM: xterm
+      - image: circleci/postgres:9.6-alpine
+        environment:
+          POSTGRES_USER: pgx
+          POSTGRES_DB: pgx-test
+          POSTGRES_PASSWORD: ""
+    steps:
+      - checkout
+      - run:
+          name: Pin packages
+          command: |
+            opam pin add -y -n pgx .
+            opam pin add -y -n pgx_async .
+            opam pin add -y -n pgx_lwt .
+            opam pin add -y -n pgx_unix .
+      - run:
+          name: Install system dependencies
+          command: opam depext -y pgx pgx_async pgx_lwt pgx_unix
+      - run:
+          name: Install OCaml dependencies
+          command: opam install --deps-only -t -y pgx pgx_async pgx_lwt pgx_unix
+      - run:
+          name: Build
+          command: eval `opam config env` && jbuilder build @install
+      - run:
+          name: Test
+          command: eval `opam config env` && jbuilder runtest

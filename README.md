@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/arenadotio/pgx.svg?style=shield)](https://circleci.com/gh/arenadotio/pgx)
+
 PGX is a pure-OCaml PostgreSQL client library, supporting Async, LWT, or
 synchronous operations.
 
@@ -11,8 +13,7 @@ This library focuses on correctness and safety, with features like:
  - Trying to run multiple queries at the same time will work properly (although
    there's no performance benefit, since we currently don't send queries in
    parallel).
- - Lots of automated tests (put link to CircleCI test coverage here once we go
-   live).
+ - Lots of automated tests.
  - `Pgx.Value` for parameters and returned data, encouraging people to use
    the built-in converters instead of trying to handle everything as a string.
  - Async and LWT support are built in, no need to write your own IO module.
