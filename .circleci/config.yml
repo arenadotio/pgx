@@ -30,7 +30,7 @@ jobs:
           command: opam install --deps-only -t -y pgx pgx_async pgx_lwt pgx_unix
       - run:
           name: Build
-          command: eval `opam config env` && jbuilder build @install
+          command: eval `opam config env` && make
       - run:
           name: Test
-          command: eval `opam config env` && jbuilder runtest
+          command: eval `opam config env` && make test
