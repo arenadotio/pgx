@@ -31,6 +31,19 @@ let to_bool_exn = required to_bool'
 
 let to_bool = Option.map to_bool'
 
+let of_char c =
+  Some (String.make 1 c)
+
+let to_char' str =
+  if String.length str <> 1 then
+    convert_failure "char" str
+  else
+    str.[0]
+
+let to_char_exn = required to_char'
+
+let to_char = Option.map to_char'
+
 let of_float' f =
   match classify_float f with
   | FP_infinite when f > 0. -> "Infinity"

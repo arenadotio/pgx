@@ -15,6 +15,10 @@ module type S = sig
   val to_bool_exn : t -> bool
   val to_bool : t -> bool option
 
+  val of_char : char -> t
+  val to_char_exn : t -> char
+  val to_char : t -> char option
+
   val of_float : float -> t
   val to_float_exn : t -> float
   val to_float : t -> float option

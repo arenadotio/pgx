@@ -256,6 +256,8 @@ module type S = sig
   (** [execute conn ?params query] prepares and executes the statement
       [query] and returns the result. *)
 
+  val executef : t -> ('a, unit, row list monad) format -> 'a
+
   val execute_fold
     : ?params:param list
     -> t

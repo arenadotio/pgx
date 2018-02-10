@@ -36,7 +36,7 @@ module Isolation = struct
     | Repeatable_read
     | Read_committed
     | Read_uncommitted
-  [@@deriving sexp]
+      [@@deriving sexp]
 
   let to_string = function
     | Serializable -> "serializable"
@@ -59,7 +59,7 @@ module Ready = struct
     | In_transaction
     | Error
     | Other of char
-  [@@deriving sexp]
+        [@@deriving sexp]
 
   let to_string = function
     | Idle           -> "Idle"
@@ -83,7 +83,7 @@ module Row_desc = struct
     ; len: int
     ; modifier: int32
     ; format: int }
-  [@@deriving sexp]
+      [@@deriving sexp]
 
 end
 
@@ -95,7 +95,7 @@ module Result_desc = struct
     ; field_type : oid
     ; length : int
     ; modifier : int32 }
-  [@@deriving sexp]
+      [@@deriving sexp]
 
   let of_row_desc r =
     let open Row_desc in
@@ -124,7 +124,7 @@ module Error_response = struct
     ; severity: string
     ; message:  string
     ; custom: (char * string) list }
-  [@@deriving sexp]
+      [@@deriving sexp]
 
   let should_print t ~verbose =
     if verbose < 1 then false
@@ -189,7 +189,7 @@ module Message_in = struct
   type copy_format =
     | Text
     | Binary
-  [@@deriving sexp]
+        [@@deriving sexp]
 
   type t =
     | AuthenticationOk
@@ -216,7 +216,7 @@ module Message_in = struct
     | ReadyForQuery of Ready.t
     | RowDescription of Row_desc.t list
     | UnknownMessage of char * string
-  [@@deriving sexp]
+          [@@deriving sexp]
 
   let to_string t = Sexplib.Sexp.to_string_hum (sexp_of_t t)
 
@@ -230,7 +230,7 @@ module Message_in = struct
         r)
       else
         fail_parse ("Pgx: parse_backend_message: " ^ where ^
-                    ": short message") in
+            ": short message") in
     let get_byte where = Char.code (get_char where) in
     let get_int8 () =
       get_byte "get_int8" in
@@ -275,13 +275,13 @@ module Message_in = struct
       match typ with
       | 'R' ->
         (match get_int32 () with
-         | 0l -> AuthenticationOk
-         | 2l -> AuthenticationKerberosV5
-         | 3l -> AuthenticationCleartextPassword
-         | 4l -> AuthenticationCryptPassword (get_n_bytes 2)
-         | 5l -> AuthenticationMD5Password (get_n_bytes 4)
-         | 6l -> AuthenticationSCMCredential
-         | _  -> UnknownMessage (typ, msg))
+        | 0l -> AuthenticationOk
+        | 2l -> AuthenticationKerberosV5
+        | 3l -> AuthenticationCleartextPassword
+        | 4l -> AuthenticationCryptPassword (get_n_bytes 2)
+        | 5l -> AuthenticationMD5Password (get_n_bytes 4)
+        | 6l -> AuthenticationSCMCredential
+        | _  -> UnknownMessage (typ, msg))
       | 'H' ->
         let format_code_to_format = function
           | 0 -> Text
@@ -290,7 +290,7 @@ module Message_in = struct
             fail_msg "Unused CopyOutResponse format: %d" format_code in
         let format_ = format_code_to_format (get_int8 ()) in
         let formats = get_many (fun () ->
-          format_code_to_format (get_int16 ())) in
+            format_code_to_format (get_int16 ())) in
         CopyOutResponse (format_, formats)
       | 'd' -> CopyData (get_n_bytes len)
       | 'c' -> CopyDone
@@ -334,35 +334,35 @@ module Message_in = struct
       | 'C' -> CommandComplete (get_string ())
       | 'D' ->
         DataRow (
-          get_many (fun () ->
-            let len = get_int32 () in
-            if len < 0l then None
-            else (
-              if len >= 0x4000_0000l then
-                fail_parse "Pgx: result field is too long";
-              let len = Int32.to_int len in
-              if len > Sys.max_string_length then
-                fail_parse "Pgx: result field is too wide for string";
-              let bytes = get_n_bytes len in
-              Some bytes
+            get_many (fun () ->
+              let len = get_int32 () in
+              if len < 0l then None
+              else (
+                if len >= 0x4000_0000l then
+                  fail_parse "Pgx: result field is too long";
+                let len = Int32.to_int len in
+                if len > Sys.max_string_length then
+                  fail_parse "Pgx: result field is too wide for string";
+                let bytes = get_n_bytes len in
+                Some bytes
+              )
             )
           )
-        )
       | 'I' -> EmptyQueryResponse
       | 'n' -> NoData
       | 'T' ->
         RowDescription (
-          get_many (fun () ->
-            let name = get_string () in
-            let table = get_int32 () in
-            let col = get_int16 () in
-            let oid = get_int32 () in
-            let len = get_int16 () in
-            let modifier = get_int32 () in
-            let format = get_int16 () in
-            { Row_desc.name ; table ; col ; oid ; len ; modifier ; format }
+            get_many (fun () ->
+              let name = get_string () in
+              let table = get_int32 () in
+              let col = get_int16 () in
+              let oid = get_int32 () in
+              let len = get_int16 () in
+              let modifier = get_int32 () in
+              let format = get_int16 () in
+              { Row_desc.name ; table ; col ; oid ; len ; modifier ; format }
+            )
           )
-        )
       | 't' -> ParameterDescription (get_many get_int32)
       | _ -> UnknownMessage (typ, msg) in
     msg
@@ -373,7 +373,7 @@ module Message_out = struct
     { name: string
     ; query: string
     ; types: oid list }
-  [@@deriving sexp]
+      [@@deriving sexp]
 
   type portal = string [@@deriving sexp]
   type statement = string [@@deriving sexp]
@@ -384,12 +384,12 @@ module Message_out = struct
     { portal: string
     ; name: string
     ; params: string option list }
-  [@@deriving sexp]
+      [@@deriving sexp]
 
   type startup =
     { user: string
     ; database: string }
-  [@@deriving sexp]
+      [@@deriving sexp]
 
   type t =
     | Password of string (* p *)
@@ -405,7 +405,7 @@ module Message_out = struct
     | Describe_portal of portal (* DP *)
     | Startup_message of startup
     | Simple_query of query
-  [@@deriving sexp]
+        [@@deriving sexp]
 
   let add_byte buf i =
     (* Deliberately throw an exception if i isn't [0..255]. *)
@@ -472,10 +472,10 @@ module Message_out = struct
       add_int16 msg 0; (* Send all parameters as text. *)
       add_int16 msg (List.length params);
       List.iter (function
-        | None -> add_int32 msg 0xffff_ffffl (* NULL *)
-        | Some str ->
-          add_int32 msg (Int32.of_int (String.length str));
-          add_string_no_trailing_nil msg str
+      | None -> add_int32 msg 0xffff_ffffl (* NULL *)
+      | Some str ->
+        add_int32 msg (Int32.of_int (String.length str));
+        add_string_no_trailing_nil msg str
       ) params;
       add_int16 msg 0; (* Send back all results as text. *)
       (Some 'B', Buffer.contents msg)
@@ -720,6 +720,8 @@ module type S = sig
 
   val execute : ?params:row -> t -> string -> row list monad
 
+  val executef : t -> ('a, unit, row list monad) format -> 'a
+
   val execute_fold
     : ?params:param list
     -> t
@@ -756,7 +758,7 @@ module Make (Thread : IO) = struct
     ; verbose : int
     ; max_message_length : int
     ; mutable prepared_num : int (* Used to generate statement names *) }
-  [@@deriving sexp]
+      [@@deriving sexp]
 
   type t = conn Sequencer.t
 
@@ -786,20 +788,20 @@ module Make (Thread : IO) = struct
       fail_msg "Pgx: message is larger than 1 GB";
 
     begin if debug_protocol then
-        Thread.debug(sprintf "> %s%d %S"
-                       (match typ with
-                        | None -> ""
-                        | Some c -> sprintf "%c " c)
-                       len msg)
-      else
-        return ()
+            Thread.debug(sprintf "> %s%d %S"
+                (match typ with
+                | None -> ""
+                | Some c -> sprintf "%c " c)
+                len msg)
+          else
+            return ()
     end
     >>= fun () ->
 
     (* Write the type byte? *)
     (match typ with
-     | None -> Thread.return ()
-     | Some c -> output_char chan c
+    | None -> Thread.return ()
+    | Some c -> output_char chan c
     ) >>= fun () ->
 
     (* Write the length field. *)
@@ -844,8 +846,8 @@ module Make (Thread : IO) = struct
       really_input ichan msg 0 len >>= fun () ->
       let msg = Message_in.read (typ, Bytes.to_string msg) in
       begin if debug_protocol then
-          Thread.debug (sprintf "< %s" (Message_in.to_string msg))
-        else return ()
+              Thread.debug (sprintf "< %s" (Message_in.to_string msg))
+            else return ()
       end
       >>| fun () -> msg)
 
@@ -857,8 +859,8 @@ module Make (Thread : IO) = struct
   (* Handle an ErrorResponse anywhere, by printing and raising an exception. *)
   let pg_error ?(sync=false) ~conn fields =
     begin if Error_response.should_print fields ~verbose:conn.verbose
-      then Thread.debug (Error_response.to_string ~verbose:(conn.verbose > 1) fields)
-      else return ()
+          then Thread.debug (Error_response.to_string ~verbose:(conn.verbose > 1) fields)
+          else return ()
     end
     >>= fun () ->
     (* If conn parameter was given, then resynch - read messages until we
@@ -878,16 +880,16 @@ module Make (Thread : IO) = struct
   let next_id = begin
     let id = ref 0 in
     (fun () ->
-       (* In OCaml this doesn't allocate, and threads can't context switch except on
-          allocation *)
-       incr id;
-       !id)
+      (* In OCaml this doesn't allocate, and threads can't context switch except on
+         allocation *)
+      incr id;
+      !id)
   end
 
   (*----- Connection. -----*)
 
   let connect ?host ?port ?user ?password ?database
-        ?(unix_domain_socket_dir="/tmp") ?verbose ?(max_message_length=Sys.max_string_length) () =
+      ?(unix_domain_socket_dir="/tmp") ?verbose ?(max_message_length=Sys.max_string_length) () =
 
     (* Get the username. *)
     begin match user with
@@ -961,8 +963,8 @@ module Make (Thread : IO) = struct
     (* Loop around here until the database gives a ReadyForQuery message. *)
     let rec loop msg =
       (match msg with
-       | Some msg -> send_recv conn msg
-       | None -> receive_message conn) >>=
+      | Some msg -> send_recv conn msg
+      | None -> receive_message conn) >>=
       function
       | Message_in.ReadyForQuery _ -> return () (* Finished connecting! *)
       | Message_in.BackendKeyData _ ->
@@ -1055,7 +1057,7 @@ module Make (Thread : IO) = struct
     type s =
       { conn : conn Sequencer.t sexp_opaque
       ; name : string }
-    [@@deriving sexp_of]
+        [@@deriving sexp_of]
 
     let prepare ?name ?(types = []) seq ~query =
       Sequencer.enqueue seq (fun conn ->
@@ -1112,7 +1114,7 @@ module Make (Thread : IO) = struct
           close s)
 
     let execute_iter ?(portal = "") { name ; conn }
-          ~params ~f =
+        ~params ~f =
       let encode_unprintable b =
         let len = String.length b in
         let buf = Buffer.create (len * 2) in
@@ -1158,8 +1160,8 @@ module Make (Thread : IO) = struct
           | Message_in.EmptyQueryResponse -> loop ()
           | Message_in.DataRow fields ->
             List.map (Option.bind (fun v ->
-              deserialize_string v
-              |> Value.of_string))
+                  deserialize_string v
+                  |> Value.of_string))
               fields
             |> f
             >>= loop
@@ -1177,15 +1179,15 @@ module Make (Thread : IO) = struct
             loop ()
           | Message_in.CopyOutResponse (format_, format_list) ->
             (match format_ with
-             | Message_in.Text ->
-               List.iter (function
-                 | Message_in.Binary ->
-                   fail_msg "Pgx.query: Binary column found in text CopyOutResponse"
-                 | _ -> ()) format_list;
-               loop ()
-             | Message_in.Binary ->
-               fail_msg "Pgx.iter_execute: CopyOutResponse for binary is \
-                         not implemented yet")
+            | Message_in.Text ->
+              List.iter (function
+                | Message_in.Binary ->
+                  fail_msg "Pgx.query: Binary column found in text CopyOutResponse"
+                | _ -> ()) format_list;
+              loop ()
+            | Message_in.Binary ->
+              fail_msg "Pgx.iter_execute: CopyOutResponse for binary is \
+                        not implemented yet")
           | Message_in.CopyData row ->
             f [row |> deserialize_string |> Value.of_string]
             >>= fun () -> loop ()
@@ -1224,11 +1226,11 @@ module Make (Thread : IO) = struct
         send_message conn (Message_out.Describe_statement name) >>= fun () ->
         flush_msg conn >>= fun () ->
         receive_message conn >>= (function
-          | Message_in.ErrorResponse err -> pg_error ~sync:true ~conn err
-          | Message_in.ParameterDescription params -> return params
-          | msg ->
-            fail_msg "Pgx: unknown response from describe: %s"
-              (Message_in.to_string msg)) >>= fun params ->
+        | Message_in.ErrorResponse err -> pg_error ~sync:true ~conn err
+        | Message_in.ParameterDescription params -> return params
+        | msg ->
+          fail_msg "Pgx: unknown response from describe: %s"
+            (Message_in.to_string msg)) >>= fun params ->
         receive_message conn >>= function
         | Message_in.ErrorResponse err -> pg_error ~sync:true ~conn err
         | Message_in.NoData -> return (params, None)
@@ -1278,18 +1280,18 @@ module Make (Thread : IO) = struct
       match state, msg with
       | _, Message_in.EmptyQueryResponse ->
         (match acc, rows with
-         | [], [] -> return []
-         | _ -> fail_msg "Pgx.query: EmptyQueryResponse with rows")
+        | [], [] -> return []
+        | _ -> fail_msg "Pgx.query: EmptyQueryResponse with rows")
       | _, Message_in.CopyOutResponse (format_, format_list) ->
         (match format_ with
-         | Message_in.Text ->
-           List.iter (function
-             | Message_in.Binary ->
-               fail_msg "Pgx.query: Binary column found in text CopyOutResponse"
-             | _ -> ()) format_list;
-           loop acc rows state
-         | Message_in.Binary ->
-           fail_msg "Pgx.query: CopyOutResponse for binary is not implemented yet")
+        | Message_in.Text ->
+          List.iter (function
+            | Message_in.Binary ->
+              fail_msg "Pgx.query: Binary column found in text CopyOutResponse"
+            | _ -> ()) format_list;
+          loop acc rows state
+        | Message_in.Binary ->
+          fail_msg "Pgx.query: CopyOutResponse for binary is not implemented yet")
       | _, Message_in.CopyData row ->
         loop acc ([row |> deserialize_string |> Value.of_string]::rows) state
       | _, Message_in.CopyDone ->
@@ -1297,8 +1299,8 @@ module Make (Thread : IO) = struct
       | `Rows, Message_in.DataRow row ->
         let row =
           List.map (Option.bind (fun v ->
-            deserialize_string v
-            |> Value.of_string))
+              deserialize_string v
+              |> Value.of_string))
             row
         in
         loop acc (row::rows) `Rows
@@ -1308,8 +1310,8 @@ module Make (Thread : IO) = struct
       | `Row_desc, Message_in.RowDescription _ -> loop acc rows `Rows
       | _, Message_in.ReadyForQuery _ ->
         (match rows with
-         | [] -> return (List.rev acc)
-         | _ -> fail_msg "Pgx.query: unused rows for acc")
+        | [] -> return (List.rev acc)
+        | _ -> fail_msg "Pgx.query: unused rows for acc")
       | _, Message_in.ErrorResponse err -> pg_error ~conn:dbh err
       (* XXX log this notice properly *)
       | _, Message_in.NoticeResponse _ -> loop acc rows state
@@ -1325,67 +1327,111 @@ module Make (Thread : IO) = struct
 
   let execute ?(params=[]) db query =
     Prepared.(with_prepare db ~query ~f:(fun s ->
-      execute s ~params))
+        execute s ~params))
 
-  let execute_iter ?(params=[]) db query ~f =
-    Prepared.(with_prepare db ~query ~f:(fun s ->
+  open CamlinternalFormatBasics
+  let executef t ((Format (fmt, _)) : ('a, unit, row list monad) format) =
+    let rec executef'
+      : type a c d e . t -> param list -> string -> (a, unit, row list monad, row list monad, row list monad, row list monad) fmt -> a =
+  fun t params query ->
+    let param_f v rest =
+      let query =
+        List.length params + 1
+        |> sprintf "%s$%d" query
+      in
+      let params = v :: params in
+      executef' t params query rest
+    in
+    function
+    | Bool rest ->
+      (fun b -> param_f (Value.of_bool b) rest)
+    | Char rest ->
+      (fun c -> param_f (Value.of_char c) rest)
+    | Float (fconv, pad, precision, rest) ->
+      (match pad, precision with
+      | No_padding, No_precision ->
+        (fun f -> param_f (Value.of_float f) rest)
+      | _ -> failwith "Padding and precision are not supported")
+    | Int (iconv, pad, precision, rest) ->
+      (match pad, precision with
+      | No_padding, No_precision ->
+        (fun i -> param_f (Value.of_int i) rest)
+      | _ -> failwith "Padding and precision are not supported")
+    | String (pad, rest) ->
+      (match pad with
+      | No_padding ->
+        (fun str -> param_f (Value.of_string str) rest)
+      | _ -> failwith "Padding is not supported")
+    | String_literal (str, rest) ->
+      let query = query ^ str in
+      executef' t params query rest
+    | End_of_format ->
+      let params = List.rev params in
+      print_endline query;
+      execute t ~params query
+    | _ -> assert false
+in
+executef' t [] "" fmt
+
+let execute_iter ?(params=[]) db query ~f =
+  Prepared.(with_prepare db ~query ~f:(fun s ->
       execute_iter s ~params ~f))
 
-  let execute_fold ?(params=[]) db query ~init ~f =
-    Prepared.(with_prepare db ~query ~f:(fun s ->
+let execute_fold ?(params=[]) db query ~init ~f =
+  Prepared.(with_prepare db ~query ~f:(fun s ->
       execute_fold s ~params ~init ~f))
 
-  let begin_work ?isolation ?access ?deferrable seq =
-    Sequencer.enqueue seq (fun conn ->
-      if conn.in_transaction
-      then invalid_arg "begin_work: cannot transact while in another transaction"
-      else conn.in_transaction <- true;
-      let isolation_str = match isolation with
-        | None -> ""
-        | Some x -> " isolation level " ^ (Isolation.to_string x) in
-      let access_str = match access with
-        | None -> ""
-        | Some x -> " " ^ (Access.to_string x) in
-      let deferrable_str = match deferrable with
-        | None -> ""
-        | Some true -> " deferrable"
-        | Some false -> " not deferrable" in
-      let query = "begin work" ^ isolation_str ^ access_str ^ deferrable_str in
-      simple_query' conn query)
-    >>| fun _ -> seq
+let begin_work ?isolation ?access ?deferrable seq =
+  Sequencer.enqueue seq (fun conn ->
+    if conn.in_transaction
+    then invalid_arg "begin_work: cannot transact while in another transaction"
+    else conn.in_transaction <- true;
+    let isolation_str = match isolation with
+      | None -> ""
+      | Some x -> " isolation level " ^ (Isolation.to_string x) in
+    let access_str = match access with
+      | None -> ""
+      | Some x -> " " ^ (Access.to_string x) in
+    let deferrable_str = match deferrable with
+      | None -> ""
+      | Some true -> " deferrable"
+      | Some false -> " not deferrable" in
+    let query = "begin work" ^ isolation_str ^ access_str ^ deferrable_str in
+    simple_query' conn query)
+  >>| fun _ -> seq
 
-  let commit seq =
-    Sequencer.enqueue seq (fun conn ->
-      if not conn.in_transaction then
-        invalid_arg "commit: cannot run outside of transaction";
-      simple_query' conn "commit"
-      >>| fun _ ->
-      conn.in_transaction <- false)
+let commit seq =
+  Sequencer.enqueue seq (fun conn ->
+    if not conn.in_transaction then
+      invalid_arg "commit: cannot run outside of transaction";
+    simple_query' conn "commit"
+    >>| fun _ ->
+    conn.in_transaction <- false)
 
-  let rollback seq =
-    Sequencer.enqueue seq (fun conn ->
-      if not conn.in_transaction then
-        invalid_arg "rollback: cannot run outside of transaction";
-      simple_query' conn "rollback"
-      >>| fun _ ->
-      conn.in_transaction <- false)
+let rollback seq =
+  Sequencer.enqueue seq (fun conn ->
+    if not conn.in_transaction then
+      invalid_arg "rollback: cannot run outside of transaction";
+    simple_query' conn "rollback"
+    >>| fun _ ->
+    conn.in_transaction <- false)
 
-  let with_transaction ?isolation ?access ?deferrable conn f =
-    begin_work ?isolation ?access ?deferrable conn
-    >>= fun conn ->
-    catch
-      (fun () ->
-         f conn >>= fun r ->
-         commit conn >>= fun () ->
-         return r
-      )
-      (fun e ->
-         rollback conn >>= fun () ->
-         fail e
-      )
+let with_transaction ?isolation ?access ?deferrable conn f =
+  begin_work ?isolation ?access ?deferrable conn
+  >>= fun conn ->
+  catch
+    (fun () ->
+      f conn >>= fun r ->
+      commit conn >>= fun () ->
+      return r
+    )
+    (fun e ->
+      rollback conn >>= fun () ->
+      fail e
+    )
 
-  let execute_many conn ~query ~params =
-    Prepared.(with_prepare conn ~query ~f:(fun s ->
+let execute_many conn ~query ~params =
+  Prepared.(with_prepare conn ~query ~f:(fun s ->
       execute_many s ~params))
 end
 
