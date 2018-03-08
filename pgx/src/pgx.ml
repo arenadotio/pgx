@@ -112,7 +112,7 @@ end
 exception Unexpected_message of string [@@deriving sexp]
 let fail_msg fmt =
   ksprintf (fun m ->
-    raise (Unexpected_message m))
+      raise (Unexpected_message m))
     fmt
 
 exception Parsing_failure of string [@@deriving sexp]
@@ -139,7 +139,7 @@ module Error_response = struct
     let field_info =
       if verbose then
         List.map (fun (field_type, field) ->
-          sprintf "%c: %s" field_type field) t.custom
+            sprintf "%c: %s" field_type field) t.custom
       else [] in
     String.concat "\n" (msg :: field_info)
 
@@ -172,16 +172,16 @@ module Error_response = struct
         let verbose = 1 in
         [ "FATAL" ; "ERROR" ; "PANIC" ]
         |> List.iter (fun severity ->
-          let msg = { info_msg with severity } in
-          [%test_result: bool] ~expect:true (should_print msg ~verbose));
+            let msg = { info_msg with severity } in
+            [%test_result: bool] ~expect:true (should_print msg ~verbose));
         [%test_result: bool] ~expect:false (should_print info_msg ~verbose)
 
       let%test_unit "should_print tests: print if verbose > 1 no matter t.severity" =
         let verbose = 2 in
         [ "INFO"; "FATAL" ; "ERROR" ; "PANIC" ]
         |> List.iter (fun severity ->
-          let msg = { info_msg with severity } in
-          [%test_result: bool] ~expect:true (should_print msg ~verbose));
+            let msg = { info_msg with severity } in
+            [%test_result: bool] ~expect:true (should_print msg ~verbose));
     end)
 end
 
@@ -290,7 +290,7 @@ module Message_in = struct
             fail_msg "Unused CopyOutResponse format: %d" format_code in
         let format_ = format_code_to_format (get_int8 ()) in
         let formats = get_many (fun () ->
-          format_code_to_format (get_int16 ())) in
+            format_code_to_format (get_int16 ())) in
         CopyOutResponse (format_, formats)
       | 'd' -> CopyData (get_n_bytes len)
       | 'c' -> CopyDone
@@ -335,33 +335,33 @@ module Message_in = struct
       | 'D' ->
         DataRow (
           get_many (fun () ->
-            let len = get_int32 () in
-            if len < 0l then None
-            else (
-              if len >= 0x4000_0000l then
-                fail_parse "Pgx: result field is too long";
-              let len = Int32.to_int len in
-              if len > Sys.max_string_length then
-                fail_parse "Pgx: result field is too wide for string";
-              let bytes = get_n_bytes len in
-              Some bytes
+              let len = get_int32 () in
+              if len < 0l then None
+              else (
+                if len >= 0x4000_0000l then
+                  fail_parse "Pgx: result field is too long";
+                let len = Int32.to_int len in
+                if len > Sys.max_string_length then
+                  fail_parse "Pgx: result field is too wide for string";
+                let bytes = get_n_bytes len in
+                Some bytes
+              )
             )
-          )
         )
       | 'I' -> EmptyQueryResponse
       | 'n' -> NoData
       | 'T' ->
         RowDescription (
           get_many (fun () ->
-            let name = get_string () in
-            let table = get_int32 () in
-            let col = get_int16 () in
-            let oid = get_int32 () in
-            let len = get_int16 () in
-            let modifier = get_int32 () in
-            let format = get_int16 () in
-            { Row_desc.name ; table ; col ; oid ; len ; modifier ; format }
-          )
+              let name = get_string () in
+              let table = get_int32 () in
+              let col = get_int16 () in
+              let oid = get_int32 () in
+              let len = get_int16 () in
+              let modifier = get_int32 () in
+              let format = get_int16 () in
+              { Row_desc.name ; table ; col ; oid ; len ; modifier ; format }
+            )
         )
       | 't' -> ParameterDescription (get_many get_int32)
       | _ -> UnknownMessage (typ, msg) in
@@ -472,11 +472,11 @@ module Message_out = struct
       add_int16 msg 0; (* Send all parameters as text. *)
       add_int16 msg (List.length params);
       List.iter (function
-        | None -> add_int32 msg 0xffff_ffffl (* NULL *)
-        | Some str ->
-          add_int32 msg (Int32.of_int (String.length str));
-          add_string_no_trailing_nil msg str
-      ) params;
+          | None -> add_int32 msg 0xffff_ffffl (* NULL *)
+          | Some str ->
+            add_int32 msg (Int32.of_int (String.length str));
+            add_string_no_trailing_nil msg str
+        ) params;
       add_int16 msg 0; (* Send back all results as text. *)
       (Some 'B', Buffer.contents msg)
     | Close_statement statement ->
@@ -635,7 +635,17 @@ module type S = sig
 
   val close : t -> unit monad
 
-  val with_conn : ?database:string -> (t -> 'a monad) -> 'a monad
+  val with_conn 
+    : ?host:string
+    -> ?port:int
+    -> ?user:string
+    -> ?password:string
+    -> ?database:string
+    -> ?unix_domain_socket_dir:string
+    -> ?verbose:int
+    -> ?max_message_length:int
+    -> (t -> 'a monad)
+    -> 'a monad
 
   val ping : t -> unit monad
 
@@ -887,15 +897,15 @@ module Make (Thread : IO) = struct
   (*----- Connection. -----*)
 
   let connect ?host ?port ?user ?password ?database
-        ?(unix_domain_socket_dir="/tmp") ?verbose ?(max_message_length=Sys.max_string_length) () =
+      ?(unix_domain_socket_dir="/tmp") ?verbose ?(max_message_length=Sys.max_string_length) () =
 
     (* Get the username. *)
     begin match user with
-    | Some user -> return user
-    | None ->
-      try return (Sys.getenv "PGUSER")
-      with Not_found ->
-        Thread.getlogin ()
+      | Some user -> return user
+      | None ->
+        try return (Sys.getenv "PGUSER")
+        with Not_found ->
+          Thread.getlogin ()
     end
     >>= fun user ->
 
@@ -1011,14 +1021,17 @@ module Make (Thread : IO) = struct
 
   let close seq =
     Sequencer.enqueue seq (fun conn ->
-      (* Be nice and send the terminate message. *)
-      send_message conn Message_out.Close >>= fun () ->
-      flush conn.chan >>= fun () ->
-      (* Closes the underlying socket too. *)
-      close_in conn.ichan)
+        (* Be nice and send the terminate message. *)
+        send_message conn Message_out.Close >>= fun () ->
+        flush conn.chan >>= fun () ->
+        (* Closes the underlying socket too. *)
+        close_in conn.ichan)
 
-  let with_conn ?database f =
-    connect ?database () >>= fun dbh ->
+  let with_conn ?host ?port ?user ?password ?database ?unix_domain_socket_dir
+      ?verbose ?max_message_length f =
+    connect ?host ?port ?user ?password ?database ?unix_domain_socket_dir
+      ?verbose ?max_message_length ()
+    >>= fun dbh ->
     protect (fun () -> f dbh)
       ~finally:(fun () -> close dbh)
 
@@ -1033,7 +1046,7 @@ module Make (Thread : IO) = struct
 
   let ping seq =
     Sequencer.enqueue seq (fun conn ->
-      sync conn)
+        sync conn)
 
   let alive conn =
     catch
@@ -1059,49 +1072,49 @@ module Make (Thread : IO) = struct
 
     let prepare ?name ?(types = []) seq ~query =
       Sequencer.enqueue seq (fun conn ->
-        let name = match name with
-          | Some name -> name
-          | None ->
-            let n = conn.prepared_num in
-            conn.prepared_num <- n + 1;
-            sprintf "pgx_prepared_%d" n
-        in
-        send_message conn
-          (Message_out.Prepare { Message_out.name ; query ; types })
-        >>= fun () ->
-        flush_msg conn >>= fun () ->
-        let rec loop () =
-          receive_message conn >>= function
-          | Message_in.ErrorResponse err -> pg_error ~sync:true ~conn err
-          | Message_in.ParseComplete ->
-            (* Finished! *)
-            return { conn = seq ; name }
-          | Message_in.NoticeResponse _ ->
-            (* XXX Do or print something here? *)
-            loop ()
-          | msg ->
-            fail_msg "Pgx: unknown response from parse: %s"
-              (Message_in.to_string msg)
-        in
-        loop ())
+          let name = match name with
+            | Some name -> name
+            | None ->
+              let n = conn.prepared_num in
+              conn.prepared_num <- n + 1;
+              sprintf "pgx_prepared_%d" n
+          in
+          send_message conn
+            (Message_out.Prepare { Message_out.name ; query ; types })
+          >>= fun () ->
+          flush_msg conn >>= fun () ->
+          let rec loop () =
+            receive_message conn >>= function
+            | Message_in.ErrorResponse err -> pg_error ~sync:true ~conn err
+            | Message_in.ParseComplete ->
+              (* Finished! *)
+              return { conn = seq ; name }
+            | Message_in.NoticeResponse _ ->
+              (* XXX Do or print something here? *)
+              loop ()
+            | msg ->
+              fail_msg "Pgx: unknown response from parse: %s"
+                (Message_in.to_string msg)
+          in
+          loop ())
 
     let close { conn ; name } =
       Sequencer.enqueue conn (fun conn ->
-        send_message conn (Message_out.Close_statement name) >>= fun () ->
-        flush_msg conn >>= fun () ->
-        let rec loop () =
-          receive_message conn
-          >>= function
-          | Message_in.ErrorResponse err -> pg_error ~conn err
-          | Message_in.CloseComplete -> return () (* Finished! *)
-          | Message_in.NoticeResponse _ ->
-            (* XXX Do or print something here? *)
-            loop ()
-          | m ->
-            fail_msg "Pgx: unknown response from close: %s"
-              (Message_in.to_string m)
-        in
-        loop ())
+          send_message conn (Message_out.Close_statement name) >>= fun () ->
+          flush_msg conn >>= fun () ->
+          let rec loop () =
+            receive_message conn
+            >>= function
+            | Message_in.ErrorResponse err -> pg_error ~conn err
+            | Message_in.CloseComplete -> return () (* Finished! *)
+            | Message_in.NoticeResponse _ ->
+              (* XXX Do or print something here? *)
+              loop ()
+            | m ->
+              fail_msg "Pgx: unknown response from close: %s"
+                (Message_in.to_string m)
+          in
+          loop ())
 
     let with_prepare ?name ?types t ~query ~f =
       prepare ?name ?types t ~query
@@ -1109,10 +1122,10 @@ module Make (Thread : IO) = struct
       protect
         (fun () -> f s)
         ~finally:(fun () ->
-          close s)
+            close s)
 
     let execute_iter ?(portal = "") { name ; conn }
-          ~params ~f =
+        ~params ~f =
       let encode_unprintable b =
         let len = String.length b in
         let buf = Buffer.create (len * 2) in
@@ -1130,79 +1143,79 @@ module Make (Thread : IO) = struct
       in
       let params =
         List.map (fun s ->
-          Value.to_string s
-          |> Option.map encode_unprintable)
+            Value.to_string s
+            |> Option.map encode_unprintable)
           params
       in
       Sequencer.enqueue conn (fun conn ->
-        send_message conn
-          (Message_out.Bind { Message_out.portal ; name ; params })
-        >>= fun () ->
-        send_message conn (Message_out.Execute portal) >>= fun () ->
-        send_message conn Message_out.Sync >>= fun () ->
+          send_message conn
+            (Message_out.Bind { Message_out.portal ; name ; params })
+          >>= fun () ->
+          send_message conn (Message_out.Execute portal) >>= fun () ->
+          send_message conn Message_out.Sync >>= fun () ->
 
-        (* Process the message(s) received from the database until we read
-         * ReadyForQuery.  In the process we may get some rows back from
-         * the database, no data, or an error.
-        *)
-        let rec loop () =
-          (* NB: receive_message flushes the output connection. *)
-          receive_message conn >>= function
-          | Message_in.ReadyForQuery _ -> return () (* Finished! *)
-          | Message_in.ErrorResponse err -> pg_error ~conn err (* Error *)
-          | Message_in.NoticeResponse _ ->
-            (* XXX Do or print something here? *)
-            loop ()
-          | Message_in.BindComplete -> loop ()
-          | Message_in.CommandComplete _ -> loop ()
-          | Message_in.EmptyQueryResponse -> loop ()
-          | Message_in.DataRow fields ->
-            List.map (Option.bind (fun v ->
-              deserialize_string v
-              |> Value.of_string))
-              fields
-            |> f
-            >>= loop
-          | Message_in.NoData -> loop ()
-          | Message_in.ParameterStatus _ ->
-            (* 43.2.6: ParameterStatus messages will be generated whenever
-             * the active value changes for any of the parameters the backend
-             * believes the frontend should know about. Most commonly this
-             * occurs in response to a SET SQL command executed by the
-             * frontend, and this case is effectively synchronous -- but it
-             * is also possible for parameter status changes to occur because
-             * the administrator changed a configuration file and then sent
-             * the SIGHUP signal to the postmaster.
-            *)
-            loop ()
-          | Message_in.CopyOutResponse (format_, format_list) ->
-            (match format_ with
-             | Message_in.Text ->
-               List.iter (function
-                 | Message_in.Binary ->
-                   fail_msg "Pgx.query: Binary column found in text CopyOutResponse"
-                 | _ -> ()) format_list;
-               loop ()
-             | Message_in.Binary ->
-               fail_msg "Pgx.iter_execute: CopyOutResponse for binary is \
-                         not implemented yet")
-          | Message_in.CopyData row ->
-            f [row |> deserialize_string |> Value.of_string]
-            >>= fun () -> loop ()
-          | Message_in.CopyDone -> loop ()
-          | m ->
-            fail_msg "Pgx: unknown response message: %s"
-              (Message_in.to_string m)
-        in
-        loop ())
+          (* Process the message(s) received from the database until we read
+           * ReadyForQuery.  In the process we may get some rows back from
+           * the database, no data, or an error.
+          *)
+          let rec loop () =
+            (* NB: receive_message flushes the output connection. *)
+            receive_message conn >>= function
+            | Message_in.ReadyForQuery _ -> return () (* Finished! *)
+            | Message_in.ErrorResponse err -> pg_error ~conn err (* Error *)
+            | Message_in.NoticeResponse _ ->
+              (* XXX Do or print something here? *)
+              loop ()
+            | Message_in.BindComplete -> loop ()
+            | Message_in.CommandComplete _ -> loop ()
+            | Message_in.EmptyQueryResponse -> loop ()
+            | Message_in.DataRow fields ->
+              List.map (Option.bind (fun v ->
+                  deserialize_string v
+                  |> Value.of_string))
+                fields
+              |> f
+              >>= loop
+            | Message_in.NoData -> loop ()
+            | Message_in.ParameterStatus _ ->
+              (* 43.2.6: ParameterStatus messages will be generated whenever
+               * the active value changes for any of the parameters the backend
+               * believes the frontend should know about. Most commonly this
+               * occurs in response to a SET SQL command executed by the
+               * frontend, and this case is effectively synchronous -- but it
+               * is also possible for parameter status changes to occur because
+               * the administrator changed a configuration file and then sent
+               * the SIGHUP signal to the postmaster.
+              *)
+              loop ()
+            | Message_in.CopyOutResponse (format_, format_list) ->
+              (match format_ with
+               | Message_in.Text ->
+                 List.iter (function
+                     | Message_in.Binary ->
+                       fail_msg "Pgx.query: Binary column found in text CopyOutResponse"
+                     | _ -> ()) format_list;
+                 loop ()
+               | Message_in.Binary ->
+                 fail_msg "Pgx.iter_execute: CopyOutResponse for binary is \
+                           not implemented yet")
+            | Message_in.CopyData row ->
+              f [row |> deserialize_string |> Value.of_string]
+              >>= fun () -> loop ()
+            | Message_in.CopyDone -> loop ()
+            | m ->
+              fail_msg "Pgx: unknown response message: %s"
+                (Message_in.to_string m)
+          in
+          loop ())
 
     let execute_fold ?portal s ~params ~init ~f =
       let acc = ref init in
       execute_iter ?portal s ~params
         ~f:(fun fields ->
-          f !acc fields
-          >>| fun res ->
-          acc := res)
+            f !acc fields
+            >>| fun res ->
+            acc := res)
       >>| fun () ->
       !acc
 
@@ -1213,62 +1226,62 @@ module Make (Thread : IO) = struct
 
     let execute_many s ~params =
       List.fold_left (fun acc params ->
-        acc
-        >>= fun acc -> execute s ~params
-        >>| fun results -> results :: acc)
+          acc
+          >>= fun acc -> execute s ~params
+          >>| fun results -> results :: acc)
         (return []) params
       >>| List.rev
 
     let describe { conn ; name } =
       Sequencer.enqueue conn (fun conn ->
-        send_message conn (Message_out.Describe_statement name) >>= fun () ->
-        flush_msg conn >>= fun () ->
-        receive_message conn >>= (function
+          send_message conn (Message_out.Describe_statement name) >>= fun () ->
+          flush_msg conn >>= fun () ->
+          receive_message conn >>= (function
+              | Message_in.ErrorResponse err -> pg_error ~sync:true ~conn err
+              | Message_in.ParameterDescription params -> return params
+              | msg ->
+                fail_msg "Pgx: unknown response from describe: %s"
+                  (Message_in.to_string msg)) >>= fun params ->
+          receive_message conn >>= function
           | Message_in.ErrorResponse err -> pg_error ~sync:true ~conn err
-          | Message_in.ParameterDescription params -> return params
+          | Message_in.NoData -> return (params, None)
+          | Message_in.RowDescription fields ->
+            let fields = List.map Result_desc.of_row_desc fields in
+            return (params, Some fields)
           | msg ->
             fail_msg "Pgx: unknown response from describe: %s"
-              (Message_in.to_string msg)) >>= fun params ->
-        receive_message conn >>= function
-        | Message_in.ErrorResponse err -> pg_error ~sync:true ~conn err
-        | Message_in.NoData -> return (params, None)
-        | Message_in.RowDescription fields ->
-          let fields = List.map Result_desc.of_row_desc fields in
-          return (params, Some fields)
-        | msg ->
-          fail_msg "Pgx: unknown response from describe: %s"
-            (Message_in.to_string msg))
+              (Message_in.to_string msg))
 
     let close_portal ?(portal = "") { conn } =
       Sequencer.enqueue conn (fun conn ->
-        send_message conn (Message_out.Close_portal portal) >>= fun () ->
-        flush_msg conn >>= fun () ->
-        let rec loop () =
-          receive_message conn >>= function
-          | Message_in.ErrorResponse err -> pg_error ~conn err
-          | Message_in.CloseComplete -> return ()
-          | Message_in.NoticeResponse _ ->
-            (* XXX Do or print something here? *)
-            loop ()
-          | msg ->
-            fail_msg "Pgx: unknown response from close: %s"
-              (Message_in.to_string msg)
-        in
-        loop ())
+          send_message conn (Message_out.Close_portal portal) >>= fun () ->
+          flush_msg conn >>= fun () ->
+          let rec loop () =
+            receive_message conn >>= function
+            | Message_in.ErrorResponse err -> pg_error ~conn err
+            | Message_in.CloseComplete -> return ()
+            | Message_in.NoticeResponse _ ->
+              (* XXX Do or print something here? *)
+              loop ()
+            | msg ->
+              fail_msg "Pgx: unknown response from close: %s"
+                (Message_in.to_string msg)
+          in
+          loop ())
 
     let describe_portal ?(portal = "") { conn } =
       Sequencer.enqueue conn (fun conn ->
-        send_message conn (Message_out.Describe_portal portal) >>= fun () ->
-        flush_msg conn >>= fun () ->
-        receive_message conn >>= function
-        | Message_in.ErrorResponse err -> pg_error ~sync:true ~conn err
-        | Message_in.NoData -> return None
-        | Message_in.RowDescription fields ->
-          let fields = List.map Result_desc.of_row_desc fields in
-          return (Some fields)
-        | msg ->
-          fail_msg "Pgx: unknown response from describe: %s"
-            (Message_in.to_string msg))
+          send_message conn (Message_out.Describe_portal portal) >>= fun () ->
+          flush_msg conn >>= fun () ->
+          receive_message conn >>= function
+          | Message_in.ErrorResponse err -> pg_error ~sync:true ~conn err
+          | Message_in.NoData -> return None
+          | Message_in.RowDescription fields ->
+            let fields = List.map Result_desc.of_row_desc fields in
+            return (Some fields)
+          | msg ->
+            fail_msg "Pgx: unknown response from describe: %s"
+              (Message_in.to_string msg))
   end
 
   let simple_query' dbh query =
@@ -1284,9 +1297,9 @@ module Make (Thread : IO) = struct
         (match format_ with
          | Message_in.Text ->
            List.iter (function
-             | Message_in.Binary ->
-               fail_msg "Pgx.query: Binary column found in text CopyOutResponse"
-             | _ -> ()) format_list;
+               | Message_in.Binary ->
+                 fail_msg "Pgx.query: Binary column found in text CopyOutResponse"
+               | _ -> ()) format_list;
            loop acc rows state
          | Message_in.Binary ->
            fail_msg "Pgx.query: CopyOutResponse for binary is not implemented yet")
@@ -1297,8 +1310,8 @@ module Make (Thread : IO) = struct
       | `Rows, Message_in.DataRow row ->
         let row =
           List.map (Option.bind (fun v ->
-            deserialize_string v
-            |> Value.of_string))
+              deserialize_string v
+              |> Value.of_string))
             row
         in
         loop acc (row::rows) `Rows
@@ -1321,54 +1334,54 @@ module Make (Thread : IO) = struct
 
   let simple_query seq query =
     Sequencer.enqueue seq (fun dbh ->
-      simple_query' dbh query)
+        simple_query' dbh query)
 
   let execute ?(params=[]) db query =
     Prepared.(with_prepare db ~query ~f:(fun s ->
-      execute s ~params))
+        execute s ~params))
 
   let execute_iter ?(params=[]) db query ~f =
     Prepared.(with_prepare db ~query ~f:(fun s ->
-      execute_iter s ~params ~f))
+        execute_iter s ~params ~f))
 
   let execute_fold ?(params=[]) db query ~init ~f =
     Prepared.(with_prepare db ~query ~f:(fun s ->
-      execute_fold s ~params ~init ~f))
+        execute_fold s ~params ~init ~f))
 
   let begin_work ?isolation ?access ?deferrable seq =
     Sequencer.enqueue seq (fun conn ->
-      if conn.in_transaction
-      then invalid_arg "begin_work: cannot transact while in another transaction"
-      else conn.in_transaction <- true;
-      let isolation_str = match isolation with
-        | None -> ""
-        | Some x -> " isolation level " ^ (Isolation.to_string x) in
-      let access_str = match access with
-        | None -> ""
-        | Some x -> " " ^ (Access.to_string x) in
-      let deferrable_str = match deferrable with
-        | None -> ""
-        | Some true -> " deferrable"
-        | Some false -> " not deferrable" in
-      let query = "begin work" ^ isolation_str ^ access_str ^ deferrable_str in
-      simple_query' conn query)
+        if conn.in_transaction
+        then invalid_arg "begin_work: cannot transact while in another transaction"
+        else conn.in_transaction <- true;
+        let isolation_str = match isolation with
+          | None -> ""
+          | Some x -> " isolation level " ^ (Isolation.to_string x) in
+        let access_str = match access with
+          | None -> ""
+          | Some x -> " " ^ (Access.to_string x) in
+        let deferrable_str = match deferrable with
+          | None -> ""
+          | Some true -> " deferrable"
+          | Some false -> " not deferrable" in
+        let query = "begin work" ^ isolation_str ^ access_str ^ deferrable_str in
+        simple_query' conn query)
     >>| fun _ -> seq
 
   let commit seq =
     Sequencer.enqueue seq (fun conn ->
-      if not conn.in_transaction then
-        invalid_arg "commit: cannot run outside of transaction";
-      simple_query' conn "commit"
-      >>| fun _ ->
-      conn.in_transaction <- false)
+        if not conn.in_transaction then
+          invalid_arg "commit: cannot run outside of transaction";
+        simple_query' conn "commit"
+        >>| fun _ ->
+        conn.in_transaction <- false)
 
   let rollback seq =
     Sequencer.enqueue seq (fun conn ->
-      if not conn.in_transaction then
-        invalid_arg "rollback: cannot run outside of transaction";
-      simple_query' conn "rollback"
-      >>| fun _ ->
-      conn.in_transaction <- false)
+        if not conn.in_transaction then
+          invalid_arg "rollback: cannot run outside of transaction";
+        simple_query' conn "rollback"
+        >>| fun _ ->
+        conn.in_transaction <- false)
 
   let with_transaction ?isolation ?access ?deferrable conn f =
     begin_work ?isolation ?access ?deferrable conn
@@ -1386,7 +1399,7 @@ module Make (Thread : IO) = struct
 
   let execute_many conn ~query ~params =
     Prepared.(with_prepare conn ~query ~f:(fun s ->
-      execute_many s ~params))
+        execute_many s ~params))
 end
 
 (*----- Type conversion. -----*)

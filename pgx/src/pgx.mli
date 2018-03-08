@@ -127,7 +127,20 @@ module type S = sig
       finished with the handle, or else you will get leaked file
       descriptors. *)
 
-  val with_conn : ?database:string -> (t -> 'a monad) -> 'a monad
+  val with_conn
+    : ?host:string
+    -> ?port:int
+    -> ?user:string
+    -> ?password:string
+    -> ?database:string
+    -> ?unix_domain_socket_dir:string
+    -> ?verbose:int
+    -> ?max_message_length:int
+    -> (t -> 'a monad)
+    -> 'a monad
+  (** Calls [connect], passes the DB handle to the callback, then calls
+      [close]. This is the preferred way to use this library since it cleans up
+      after itself. *)
 
   val ping : t -> unit monad
   (** Ping the database.  If the database is not available, some sort of

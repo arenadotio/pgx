@@ -113,7 +113,8 @@ let check_pgdatabase = lazy (
   if Option.is_none (Sys.getenv db)
   then failwithf "%s environment variable must be set." db ())
 
-let connect ?host ?port ?user ?password ?database ?unix_domain_socket_dir ?verbose ?max_message_length () =
+let connect ?host ?port ?user ?password ?database ?unix_domain_socket_dir
+      ?verbose ?max_message_length () =
   if Option.is_none database then Lazy.force check_pgdatabase;
   begin match unix_domain_socket_dir with
   | Some p -> return p
@@ -121,8 +122,11 @@ let connect ?host ?port ?user ?password ?database ?unix_domain_socket_dir ?verbo
   end >>= fun unix_domain_socket_dir ->
   connect ?host ?port ?user ?password ?database ?verbose ?max_message_length ~unix_domain_socket_dir ()
 
-let with_conn ?database f =
-  connect ?database () >>= fun dbh ->
+let with_conn ?host ?port ?user ?password ?database ?unix_domain_socket_dir
+      ?verbose ?max_message_length f =
+  connect ?host ?port ?user ?password ?database ?unix_domain_socket_dir
+    ?verbose ?max_message_length ()
+  >>= fun dbh ->
   Monitor.protect (fun () -> f dbh)
     ~finally:(fun () -> close dbh)
 

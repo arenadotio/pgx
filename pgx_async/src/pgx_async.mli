@@ -7,7 +7,17 @@ include (Pgx.S with type 'a monad = 'a Deferred.t)
 (* for testing purposes *)
 module Thread : Pgx.IO with type 'a t = 'a Deferred.t
 
-val with_conn: ?database:string -> (t -> 'b Deferred.t) -> 'b Deferred.t
+val with_conn
+  : ?host:string
+  -> ?port:int
+  -> ?user:string
+  -> ?password:string
+  -> ?database:string
+  -> ?unix_domain_socket_dir:string
+  -> ?verbose:int
+  -> ?max_message_length:int
+  -> (t -> 'a Deferred.t)
+  -> 'a Deferred.t
 
 module Value : sig
   include Pgx_value_intf.S
