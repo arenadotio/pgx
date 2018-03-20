@@ -4,5 +4,6 @@
  ((name pgx_async)
   (public_name pgx_async)
   (wrapped false)
+  (flags (:standard -safe-string))
   (libraries (async pgx))
-  (preprocess (pps (bisect_ppx -conditional ppx_jane ppx_driver.runner)))))
+  (preprocess (pps (bisect_ppx -conditional ppx_jane)))))
