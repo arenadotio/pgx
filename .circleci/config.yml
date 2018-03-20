@@ -16,6 +16,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Update opam
+          command: |
+            opam remote remove default
+            opam remote add default https://opam.ocaml.org
+      - run:
           name: Pin packages
           command: |
             opam pin add -y -n pgx .
