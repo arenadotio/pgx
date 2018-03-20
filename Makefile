@@ -2,6 +2,7 @@ all: build
 
 build:
 	@jbuilder build @install
+	@jbuilder build pgx_async/bin/pgx_async_example.exe
 
 clean:
 	@rm -f `find . -name 'bisect*.out'`
