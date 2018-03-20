@@ -43,15 +43,14 @@ module Thread = struct
     | `Ok c -> c
     | `Eof -> raise Pgx_eof
   let input_binary_int r =
-    let b = String.create 4 in
+    let b = Bytes.create 4 in
     Reader.really_read r b >>| function
     | `Eof _ -> raise Pgx_eof
     | `Ok ->
       let code = Caml.Char.code in
-      (code b.[0] lsl 24) lor (code b.[1] lsl 16)
-      lor (code b.[2] lsl 8) lor (code b.[3])
+      (code (Bytes.get b 0) lsl 24) lor (code (Bytes.get b 1) lsl 16)
+      lor (code (Bytes.get b 2) lsl 8) lor (code (Bytes.get b 3))
   let really_input r s pos len =
-    let s = BytesLabels.unsafe_to_string s in
     Reader.really_read r ~pos ~len s >>| function
     | `Ok -> ()
     | `Eof _ -> raise Pgx_eof
@@ -64,11 +63,12 @@ module Thread = struct
       (Reader.create fd, Writer.create fd) in
     match sockaddr with
     | Unix path ->
-      let unix_sockaddr = Tcp.to_unix_address (`Unix path) in
+      let unix_sockaddr = Tcp.Where_to_connect.of_unix_address (`Unix path) in
       Tcp.connect_sock unix_sockaddr
       >>| get_reader_writer
     | Inet (host, port) ->
-      let inet_sockaddr = Tcp.to_host_and_port host port in
+      let inet_sockaddr = Tcp.Where_to_connect.of_host_and_port
+                            (Host_and_port.create ~host:host ~port:port) in
       Tcp.connect_sock inet_sockaddr
       >>| get_reader_writer
 

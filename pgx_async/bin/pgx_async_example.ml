@@ -169,7 +169,7 @@ let main () =
        >>| fun x -> printf !"%{sexp: Pgx.row list list}\n" x
     )
 
-let () = 
+let () =
   let summary = "example command" in
-  Command.async ~summary Command.Spec.empty main
+  Command.async_spec ~summary Command.Spec.empty main
   |> Command.run
