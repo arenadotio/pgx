@@ -38,12 +38,6 @@ let with_temp_db f =
     ) ~finally:(fun () -> Pga.close dbh)
   end
 
-let with_current_db f =
-  Pga.connect () >>= fun dbh ->
-  Monitor.protect
-    (fun () -> f dbh ~db_name:(Unix.getenv_exn "PGDATABASE"))
-    ~finally:(fun () -> Pga.close dbh)
-
 type 'a new_db_callback =
   Pgx_async.t
   -> db_name:string

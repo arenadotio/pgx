@@ -11,7 +11,3 @@ val with_temp_db : 'a new_db_callback -> 'a Deferred.t
 (** [with_temp_db f] creates a temporary database and executes [f] with a database
     handle to this db and the name of the db. Once [f] executes or raises, the temp database
     will be deleted. *)
-
-val with_current_db : 'a new_db_callback -> 'a Deferred.t
-(** Like [with_temp_db] but doesn't create any databases, just connects
-    to the existing one specified by the env vars *)
