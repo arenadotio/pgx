@@ -28,23 +28,15 @@ let create_db dbh ~db_name =
   Log.Global.debug "Created database %s" db_name
 
 let with_temp_db f =
-  Pga.connect ~database:default_database ()
-  >>= fun dbh ->
   let db_name = random_db () in
-  create_db dbh ~db_name
-  >>= fun () ->
-  Monitor.protect ~name:db_name (fun () ->
-    Pga.connect ~database:db_name ()
-    >>= fun test_dbh ->
-    Monitor.protect ~name:db_name (fun () ->
-      f test_dbh ~db_name)
+  Pga.with_conn ~database:default_database (fun dbh ->
+    create_db dbh ~db_name
+    >>= fun () ->
+    Monitor.protect (fun () ->
+      Pga.with_conn ~database:db_name (fun test_dbh ->
+        f test_dbh ~db_name))
       ~finally:(fun () ->
-        Pga.close test_dbh
-        >>= fun () ->
-        drop_db dbh ~db_name
-      ))
-    ~finally:(fun () ->
-      Pga.close dbh)
+        drop_db dbh ~db_name))
 
 type 'a new_db_callback =
   Pgx_async.t
