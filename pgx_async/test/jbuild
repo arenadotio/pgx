@@ -3,7 +3,7 @@
 (executables
  ((names (test_pgx_async test_pgx_async_conversions))
   (libraries (pgx_async pgx_test oUnit))
-	(preprocess (pps (ppx_jane ppx_driver.runner)))))
+	(preprocess (pps (ppx_jane)))))
 
 (alias
  ((name runtest)

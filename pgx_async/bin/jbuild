@@ -3,4 +3,4 @@
 (executables
  ((names (pgx_async_example))
   (libraries (core async pgx_async))
-  (preprocess (pps (ppx_jane ppx_driver.runner)))))
+  (preprocess (pps (ppx_jane)))))

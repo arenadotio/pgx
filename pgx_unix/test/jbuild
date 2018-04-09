@@ -3,7 +3,7 @@
 (executable
  ((name test_pgx_unix)
   (libraries (pgx_test pgx_unix))
-	(preprocess (pps (ppx_jane ppx_driver.runner)))))
+	(preprocess (pps (ppx_jane)))))
 
 (alias
  ((name runtest)
