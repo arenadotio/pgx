@@ -4,5 +4,5 @@
  ((name pgx)
   (public_name pgx)
   (wrapped false)
-  (libraries (uuidm re))
+  (libraries (uuidm re sexplib))
   (preprocess (pps (ppx_jane bisect_ppx -conditional)))))
