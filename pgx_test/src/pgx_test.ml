@@ -45,12 +45,12 @@ module Make_tests (IO : Pgx.IO) = struct
       | _::_ -> invalid_arg "ignore_empty" in
     let create_db dbh ~db_name =
       execute dbh ("CREATE DATABASE " ^ db_name) >>|
-      ignore_empty >>= fun () ->
-      debug ("Created database " ^ db_name) in
+      ignore_empty
+    in
     let drop_db dbh ~db_name =
       execute dbh ("DROP DATABASE " ^ db_name) >>|
-      ignore_empty >>= fun () ->
-      debug ("Dropped database " ^ db_name) in
+      ignore_empty
+    in
     connect ~database:default_database () >>= begin fun dbh ->
       let db_name = random_db () in
       create_db dbh ~db_name >>= fun () ->
@@ -84,8 +84,6 @@ module Make_tests (IO : Pgx.IO) = struct
   let make_tests suite_name tests =
     deferred_list_map tests
       ~f: (fun ((name, test) : (string * async_test)) ->
-        debug ("Running " ^ name)
-        >>= fun () ->
         try_with test
         >>| function
         | Ok () -> (name, `Ok)
@@ -148,10 +146,10 @@ module Make_tests (IO : Pgx.IO) = struct
           with_conn (fun dbh ->
             simple_query dbh "select 1 union all select 2 union all select 3"
             >>| assert_equal
-            ~printer:pretty_print_string_option_list_list_list
-              [[ [Some "1"]
-               ; [Some "2"]
-               ; [Some "3"]]] )
+                  ~printer:pretty_print_string_option_list_list_list
+                  [[ [Some "1"]
+                   ; [Some "2"]
+                   ; [Some "3"]]] )
         )
       ; "query - empty", (fun () ->
           with_conn (fun dbh ->
