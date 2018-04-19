@@ -14,6 +14,6 @@ coverage: clean
 	  `find . -name 'bisect*.out'`
 
 test:
-	@jbuilder runtest
+	@jbuilder runtest --force
 
 .PHONY: all build clean coverage test
