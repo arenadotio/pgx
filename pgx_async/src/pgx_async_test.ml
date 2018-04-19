@@ -18,14 +18,10 @@ let ignore_empty = function
 let drop_db dbh ~db_name =
   Pga.execute dbh ("DROP DATABASE " ^ db_name)
   >>| ignore_empty
-  >>| fun () ->
-  Log.Global.debug "Dropped database %s" db_name
 
 let create_db dbh ~db_name =
   Pga.execute dbh ("CREATE DATABASE " ^ db_name)
   >>| ignore_empty
-  >>| fun () ->
-  Log.Global.debug "Created database %s" db_name
 
 let with_temp_db f =
   let db_name = random_db () in
