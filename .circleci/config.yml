@@ -32,10 +32,23 @@ jobs:
           command: opam depext -y pgx pgx_async pgx_lwt pgx_unix
       - run:
           name: Install OCaml dependencies
+          command: opam install --deps-only -y pgx pgx_async pgx_lwt pgx_unix
+      - run:
+          # This is a separate step so we don't run tests for all of these ^
+          name: Install OCaml test dependencies
           command: opam install --deps-only -t -y pgx pgx_async pgx_lwt pgx_unix
       - run:
           name: Build
-          command: eval `opam config env` && make
+          command: opam config exec -- make
       - run:
           name: Test
-          command: eval `opam config env` && make test
+          command: opam config exec -- make coverage
+      - run:
+          name: Install ocveralls
+          command: opam install -y ocveralls
+      - run:
+          name: Upload coverage report
+          command: |
+            cd _build/default
+            shopt -s globstar
+            opam config exec -- ocveralls **/bisect*.out --send --repo_token $COVERALLS_REPO_TOKEN --git
