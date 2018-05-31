@@ -1,4 +1,5 @@
 [![CircleCI](https://circleci.com/gh/arenadotio/pgx.svg?style=shield)](https://circleci.com/gh/arenadotio/pgx)
+[![Coverage Status](https://coveralls.io/repos/github/arenadotio/pgx/badge.svg?branch=master)](https://coveralls.io/github/arenadotio/pgx?branch=master)
 
 PGX is a pure-OCaml PostgreSQL client library, supporting Async, LWT, or
 synchronous operations.
