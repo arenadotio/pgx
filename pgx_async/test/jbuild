@@ -7,10 +7,12 @@
 
 (alias
  ((name runtest)
+  (package pgx_async)
   (deps (test_pgx_async.exe))
  (action (run ${<}))))
 
 (alias
  ((name runtest)
+  (package pgx_async)
   (deps (test_pgx_async_conversions.exe))
  (action (run ${<}))))

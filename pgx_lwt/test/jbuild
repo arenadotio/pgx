@@ -7,5 +7,6 @@
 
 (alias
  ((name runtest)
+  (package pgx_lwt)
   (deps (test_pgx_lwt.exe))
  (action (run ${<}))))
