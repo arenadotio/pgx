@@ -4,7 +4,7 @@ build:
 	@jbuilder build @install @examples
 
 clean:
-	@rm -f `find . -name 'bisect*.out'`
+	@rm -rf `find . -name 'bisect*.out'` _coverage
 	@jbuilder clean
 
 coverage: clean
