@@ -1,0 +1,2 @@
+{1 Library pgx}
+This library exposes the following toplevel modules: {!modules:Pgx Pgx_aux Pgx_value Pgx_value_intf}.
