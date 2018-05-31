@@ -44,24 +44,24 @@ module Make_tests (IO : Pgx.IO) = struct
       | [] -> ()
       | _::_ -> invalid_arg "ignore_empty" in
     let create_db dbh ~db_name =
-      execute dbh ("CREATE DATABASE " ^ db_name) >>|
-      ignore_empty
+      execute dbh ("CREATE DATABASE " ^ db_name)
+      >>| ignore_empty
     in
     let drop_db dbh ~db_name =
-      execute dbh ("DROP DATABASE " ^ db_name) >>|
-      ignore_empty
+      execute dbh ("DROP DATABASE " ^ db_name)
+      >>| ignore_empty
     in
-    connect ~database:default_database () >>= begin fun dbh ->
+    with_conn ~database:default_database begin fun dbh ->
       let db_name = random_db () in
-      create_db dbh ~db_name >>= fun () ->
-      protect (fun () ->
-        connect ~database:db_name () >>= fun test_dbh ->
-        protect (fun () -> f test_dbh ~db_name)
-          ~finally:(fun () ->
-            close test_dbh >>= fun () ->
-            drop_db dbh ~db_name
-          )
-      ) ~finally:(fun () -> close dbh)
+      create_db dbh ~db_name
+      >>= fun () ->
+      connect ~database:db_name ()
+      >>= fun test_dbh ->
+      protect (fun () -> f test_dbh ~db_name)
+        ~finally:(fun () ->
+          close test_dbh >>= fun () ->
+          drop_db dbh ~db_name
+        )
     end
 
   let assert_error_test query () =
