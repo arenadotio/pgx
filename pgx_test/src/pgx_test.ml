@@ -31,6 +31,19 @@ module Make_tests (IO : Pgx.IO) = struct
       (fun () -> f () >>| fun res -> Ok res)
       (fun e -> return (Error e))
 
+  let with_conn ?database f =
+    try_with (fun () ->
+      with_conn ?database (fun _ ->
+        return ()))
+    >>= function
+    | Error (Unix.Unix_error (Unix.ENOENT, _, _)) ->
+      OUnit2.skip_if true "Could not connect to a PostgreSQL server";
+      assert false
+    | Error exn ->
+      raise exn
+    | Ok () ->
+      with_conn ?database f
+
   let with_temp_db f =
     let random_db () =
       let random_char () =
