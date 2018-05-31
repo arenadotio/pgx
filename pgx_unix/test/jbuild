@@ -7,5 +7,6 @@
 
 (alias
  ((name runtest)
+  (package pgx_unix)
   (deps (test_pgx_unix.exe))
  (action (run ${<}))))
