@@ -17,6 +17,12 @@ module Make_tests (IO : Pgx.IO) = struct
 
   type async_test = unit -> unit IO.t
 
+  let force_tests =
+    try
+      Unix.getenv "PGX_FORCE_TESTS" |> ignore;
+      true
+    with Not_found -> false
+
   let set_to_default_db () =
     Unix.putenv "PGDATABASE" default_database
 
@@ -36,7 +42,7 @@ module Make_tests (IO : Pgx.IO) = struct
       with_conn ?database (fun _ ->
         return ()))
     >>= function
-    | Error (Unix.Unix_error (Unix.ENOENT, _, _)) ->
+    | Error (Unix.Unix_error (Unix.ENOENT, _, _)) when not force_tests ->
       OUnit2.skip_if true "Could not connect to a PostgreSQL server";
       assert false
     | Error exn ->
