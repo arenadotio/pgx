@@ -4,6 +4,8 @@
 PGX is a pure-OCaml PostgreSQL client library, supporting Async, LWT, or
 synchronous operations.
 
+[API documentation](https://arenadotio.github.io/pgx/doc/)
+
 **This is an early release. The API is likely to change significantly before
 the 1.0 release.**
 
