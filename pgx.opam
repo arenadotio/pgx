@@ -22,4 +22,4 @@ depends: [
   "ounit" {test}
 ]
 
-available: [ocaml-version >= "4.04.2"]
+available: [ocaml-version >= "4.05.0"]

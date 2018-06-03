@@ -1392,8 +1392,9 @@ module Make (Thread : IO) = struct
          return r
       )
       (fun e ->
+         let backtrace = Printexc.get_raw_backtrace () in
          rollback conn >>= fun () ->
-         reraise e
+         Printexc.raise_with_backtrace e backtrace
       )
 
   let execute_many conn ~query ~params =
