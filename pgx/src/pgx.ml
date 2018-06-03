@@ -587,7 +587,6 @@ module type IO = sig
   type 'a t
   val return : 'a -> 'a t
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
-  val fail : exn -> 'a t
   val catch : (unit -> 'a t) -> (exn -> 'a t) -> 'a t
   type in_channel
   type out_channel
@@ -635,7 +634,7 @@ module type S = sig
 
   val close : t -> unit monad
 
-  val with_conn 
+  val with_conn
     : ?host:string
     -> ?port:int
     -> ?user:string
@@ -883,7 +882,7 @@ module Make (Thread : IO) = struct
      else return ())
     >>= loop
     >>= fun () ->
-    fail (PostgreSQL_Error (Error_response.to_string fields, fields))
+    raise (PostgreSQL_Error (Error_response.to_string fields, fields))
 
   let next_id = begin
     let id = ref 0 in
@@ -1394,7 +1393,7 @@ module Make (Thread : IO) = struct
       )
       (fun e ->
          rollback conn >>= fun () ->
-         fail e
+         raise e
       )
 
   let execute_many conn ~query ~params =

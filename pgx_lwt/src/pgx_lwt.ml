@@ -5,7 +5,6 @@ module Thread = struct
 
   let return = return
   let (>>=) = (>>=)
-  let fail = raise
 
   let catch = catch
 
