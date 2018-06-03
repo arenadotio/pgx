@@ -23,7 +23,6 @@ module Simple_thread = struct
   type 'a t = 'a
   let return x = x
   let (>>=) v f =  f v
-  let fail = raise
   let catch f fexn = try f () with e -> fexn e
   type sockaddr =
     | Unix of string

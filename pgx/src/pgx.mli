@@ -22,7 +22,6 @@ module type IO = sig
   type 'a t
   val return : 'a -> 'a t
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
-  val fail : exn -> 'a t
   val catch : (unit -> 'a t) -> (exn -> 'a t) -> 'a t
   type in_channel
   type out_channel

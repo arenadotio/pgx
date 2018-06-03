@@ -14,7 +14,6 @@ module Thread = struct
 
   let return = return
   let (>>=) = (>>=)
-  let fail = raise
 
   let catch f on_exn =
     try_with ~extract_exn:true f >>= function
