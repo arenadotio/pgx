@@ -1393,7 +1393,7 @@ module Make (Thread : IO) = struct
       )
       (fun e ->
          rollback conn >>= fun () ->
-         raise e
+         reraise e
       )
 
   let execute_many conn ~query ~params =
