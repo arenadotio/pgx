@@ -19,6 +19,8 @@
  * Boston, MA 02111-1307, USA.
 *)
 
+external reraise : exn -> _ = "%reraise"
+
 module Simple_thread = struct
   type 'a t = 'a
   let return x = x
@@ -66,10 +68,10 @@ module Simple_thread = struct
       finally ();
       (match !result with
        | Some x -> x
-       | None -> raise e)
+       | None -> reraise e)
     | e ->
       finally ();
-      raise e
+      reraise e
 
   module Sequencer = struct
     type 'a monad = 'a t

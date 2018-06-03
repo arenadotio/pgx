@@ -1,5 +1,7 @@
 open OUnit2
 
+external reraise : exn -> _ = "%reraise"
+
 module type S = sig
   type 'a monad
   val run_tests : unit -> unit monad
@@ -46,7 +48,7 @@ module Make_tests (IO : Pgx.IO) = struct
       OUnit2.skip_if true "Could not connect to a PostgreSQL server";
       assert false
     | Error exn ->
-      raise exn
+      reraise exn
     | Ok () ->
       with_conn ?database f
 
@@ -111,7 +113,7 @@ module Make_tests (IO : Pgx.IO) = struct
       name >:: fun _ ->
         match res with
         | `Ok -> ()
-        | `Exn x -> (raise x))
+        | `Exn x -> (reraise x))
     >>| (>:::) suite_name
 
   let list_init n f =
@@ -247,7 +249,7 @@ module Make_tests (IO : Pgx.IO) = struct
           | Ok "unreachable" -> failwith "in_transaction invariant failed"
           | Ok _ -> assert false
           | Error (Invalid_argument _) -> ()
-          | Error exn -> raise exn
+          | Error exn -> reraise exn
         )
       ; "triple prepare no infinite loop", (fun () ->
           with_conn @@ fun dbh ->
@@ -261,7 +263,7 @@ module Make_tests (IO : Pgx.IO) = struct
           >>| function
           | Ok _ -> failwith "Triple prepare should fail"
           | Error (Pgx.PostgreSQL_Error _) -> ()
-          | Error exn -> raise exn
+          | Error exn -> reraise exn
         )
       ; "execute_many function", (fun () ->
           let params = [[ Some "1" ] ; [ Some "2" ] ; [ Some "3"]] in
