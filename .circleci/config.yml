@@ -24,20 +24,19 @@ jobs:
       - run:
           name: Pin packages
           command: |
-            opam pin add -y -n pgx .
-            opam pin add -y -n pgx_async .
-            opam pin add -y -n pgx_lwt .
-            opam pin add -y -n pgx_unix .
+            for p in *.opam; do
+              opam pin add -y -n ${p%.opam} .
+            done
       - run:
           name: Install system dependencies
-          command: opam depext -y pgx pgx_async pgx_lwt pgx_unix
+          command: opam depext -y `basename -s .opam *.opam | tr '\n' ' '`
       - run:
           name: Install OCaml dependencies
-          command: opam install --deps-only -y pgx pgx_async pgx_lwt pgx_unix
+          command: opam install --deps-only -y `basename -s .opam *.opam | tr '\n' ' '`
       - run:
           # This is a separate step so we don't run tests for all of these ^
           name: Install OCaml test dependencies
-          command: opam install --deps-only -t -y pgx pgx_async pgx_lwt pgx_unix
+          command: opam install --deps-only -t -y `basename -s .opam *.opam | tr '\n' ' '`
       - run:
           name: Build
           command: opam config exec -- make
