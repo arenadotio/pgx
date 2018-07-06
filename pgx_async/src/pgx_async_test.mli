@@ -1,6 +1,5 @@
 (** Testing library for code that uses postgres *)
 
-open Core
 open Async
 
 val set_to_default_db : unit -> unit
