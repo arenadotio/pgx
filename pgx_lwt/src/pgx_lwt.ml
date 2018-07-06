@@ -45,7 +45,7 @@ module Thread = struct
      | Unix path -> return (Unix.ADDR_UNIX path)
      | Inet (hostname, port) ->
        Lwt_unix.gethostbyname hostname
-       >|= fun { Lwt_unix.h_addr_list } ->
+       >|= fun { Lwt_unix.h_addr_list ; _ } ->
        let len = Array.length h_addr_list in
        let i = Random.int len in
        let addr = h_addr_list.(i) in

@@ -75,7 +75,7 @@ module Thread = struct
   let getlogin () =
     Unix.getuid ()
     |> Unix.Passwd.getbyuid_exn
-    >>| fun { name } -> name
+    >>| fun { name ; _ } -> name
 
   let debug msg =
     Print.prerr_endline msg;

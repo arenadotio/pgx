@@ -21,7 +21,6 @@
 
 open Pgx_aux
 open Printf
-open Sexplib
 open Sexplib.Conv
 
 (* Necessary for ppx_assert *)
@@ -60,12 +59,6 @@ module Ready = struct
     | Error
     | Other of char
   [@@deriving sexp]
-
-  let to_string = function
-    | Idle           -> "Idle"
-    | In_transaction -> "In_transaction"
-    | Error          -> "Error"
-    | Other c        -> sprintf "unknown(%c)" c
 
   let of_char = function
     | 'I' -> Idle
@@ -424,10 +417,6 @@ module Message_out = struct
     Buffer.add_char buf (Char.unsafe_chr ((base lsr 16) land 0xff));
     Buffer.add_char buf (Char.unsafe_chr ((base lsr 8) land 0xff));
     Buffer.add_char buf (Char.unsafe_chr (base land 0xff))
-
-  let add_int64 msg i =
-    add_int32 msg (Int64.to_int32 (Int64.shift_right_logical i 32));
-    add_int32 msg (Int64.to_int32 i)
 
   let check_str str =
     (* Check the string doesn't contain '\0' characters. *)
@@ -820,7 +809,7 @@ module Make (Thread : IO) = struct
   (* Receive a single result message.  Parse out the message type,
    * message length, and binary message content.
   *)
-  let receive_message { ichan ; chan ; max_message_length } =
+  let receive_message { ichan ; chan ; max_message_length ; _ } =
     (* Flush output buffer. *)
     flush chan >>= fun () ->
 
@@ -1251,7 +1240,7 @@ module Make (Thread : IO) = struct
             fail_msg "Pgx: unknown response from describe: %s"
               (Message_in.to_string msg))
 
-    let close_portal ?(portal = "") { conn } =
+    let close_portal ?(portal = "") { conn ; _ } =
       Sequencer.enqueue conn (fun conn ->
           send_message conn (Message_out.Close_portal portal) >>= fun () ->
           flush_msg conn >>= fun () ->
@@ -1268,7 +1257,7 @@ module Make (Thread : IO) = struct
           in
           loop ())
 
-    let describe_portal ?(portal = "") { conn } =
+    let describe_portal ?(portal = "") { conn ; _ } =
       Sequencer.enqueue conn (fun conn ->
           send_message conn (Message_out.Describe_portal portal) >>= fun () ->
           flush_msg conn >>= fun () ->
@@ -1401,46 +1390,3 @@ module Make (Thread : IO) = struct
     Prepared.(with_prepare conn ~query ~f:(fun s ->
         execute_many s ~params))
 end
-
-(*----- Type conversion. -----*)
-
-(* For certain types, more information is available by looking * at the
-   modifier field as well as just the OID.  For example, * for NUMERIC the
-   modifier tells us the precision.  * However we don't always have the
-   modifier field available - * in particular for parameters.  *)
-
-(* Returns the OCaml equivalent type name to the PostgreSQL type [oid].  For
-   instance, [name_of_type (Int32.of_int 23)] returns ["int32"] because the OID
-   for PostgreSQL's internal [int4] type is [23].  As another example,
-   [name_of_type (Int32.of_int 25)] returns ["string"]. *)
-let name_of_type = function
-  | 16_l -> "bool"           (* BOOLEAN *)
-  | 17_l -> "bytea"          (* BYTEA *)
-  | 20_l -> "int64"          (* INT8 *)
-  | 21_l -> "int16"          (* INT2 *)
-  | 23_l -> "int32"          (* INT4 *)
-  | 25_l -> "string"         (* TEXT *)
-  | 600_l -> "point"         (* POINT *)
-  | 700_l
-  | 701_l -> "float"         (* FLOAT4, FLOAT8 *)
-  | 869_l -> "inet"          (* INET *)
-  | 1000_l -> "bool_array"   (* BOOLEAN[] *)
-  | 1007_l -> "int32_array"  (* INT4[] *)
-  | 1009_l -> "string_array" (* TEXT[] *)
-  | 1016_l -> "int64_array"  (* INT8[] *)
-  | 1021_l
-  | 1022_l -> "float_array"  (* FLOAT4[], FLOAT8[] *)
-  | 1042_l -> "string"       (* CHAR(n) - treat as string *)
-  | 1043_l -> "string"       (* VARCHAR(n) - treat as string *)
-  | 1082_l -> "date"         (* DATE *)
-  | 1083_l -> "time"         (* TIME *)
-  | 1114_l -> "timestamp"    (* TIMESTAMP *)
-  | 1184_l -> "timestamptz"  (* TIMESTAMP WITH TIME ZONE *)
-  | 1186_l -> "interval"     (* INTERVAL *)
-  | 2278_l -> "unit"         (* VOID *)
-  | 1700_l -> "string"       (* NUMERIC *)
-  | 2950_l -> "uuid"         (* UUID *)
-  | 3802_l -> "string"       (* JSONB *)
-  | i ->
-    (* For unknown types, look at <postgresql/catalog/pg_type.h>. *)
-    fail_msg "Pgx: unknown type for OID %ld" i

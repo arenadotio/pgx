@@ -55,7 +55,9 @@ module Simple_thread = struct
   let really_input = really_input
   let close_in = close_in
   let getlogin () =
-    Unix.getuid () |> Unix.getpwuid |> fun { Unix.pw_name } -> pw_name
+    Unix.getuid ()
+    |> Unix.getpwuid
+    |> fun { Unix.pw_name ; _ } -> pw_name
 
   let debug = prerr_endline
   let protect f ~(finally: unit -> unit) =
