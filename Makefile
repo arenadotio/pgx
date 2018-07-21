@@ -12,6 +12,9 @@ coverage: clean
 	@bisect-ppx-report -I _build/default/ -html _coverage/ \
 	  `find . -name 'bisect*.out'`
 
+format:
+	@find . -path "./_build" -prune -o -name '*.ml' -o -name '*.mli' -not -name pkg.ml -print | xargs ocamlformat --doc-comments=before -i
+
 test:
 	@jbuilder runtest --force
 
