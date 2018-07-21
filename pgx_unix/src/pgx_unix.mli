@@ -19,8 +19,8 @@
  * Boston, MA 02111-1307, USA.
  *)
 
-
 include Pgx.S with type 'a monad = 'a
 
 (* for testing purposes *)
+
 module Simple_thread : Pgx.IO with type 'a t = 'a

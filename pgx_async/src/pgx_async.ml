@@ -13,78 +13,84 @@ module Thread = struct
   type 'a t = 'a Deferred.t
 
   let return = return
-  let (>>=) = (>>=)
+
+  let ( >>= ) = ( >>= )
 
   let catch f on_exn =
-    try_with ~extract_exn:true f >>= function
-    | Ok x -> return x
-    | Error exn -> on_exn exn
+    try_with ~extract_exn:true f
+    >>= function Ok x -> return x | Error exn -> on_exn exn
 
-  type sockaddr =
-    | Unix of string
-    | Inet of string * int
+  type sockaddr = Unix of string | Inet of string * int
 
   type in_channel = Reader.t
+
   type out_channel = Writer.t
 
   let output_char w char = return (Writer.write_char w char)
+
   let output_string w s = return (Writer.write w s)
+
   let output_binary_int w n =
     let chr = Caml.Char.chr in
-    Writer.write_char w (chr (n lsr 24));
-    Writer.write_char w (chr ((n lsr 16) land 255));
-    Writer.write_char w (chr ((n lsr 8) land 255));
+    Writer.write_char w (chr (n lsr 24)) ;
+    Writer.write_char w (chr ((n lsr 16) land 255)) ;
+    Writer.write_char w (chr ((n lsr 8) land 255)) ;
     return @@ Writer.write_char w (chr (n land 255))
+
   let flush = Writer.flushed
 
   let input_char r =
-    Reader.read_char r >>| function
-    | `Ok c -> c
-    | `Eof -> raise Pgx_eof
+    Reader.read_char r >>| function `Ok c -> c | `Eof -> raise Pgx_eof
+
   let input_binary_int r =
     let b = Bytes.create 4 in
-    Reader.really_read r b >>| function
-    | `Eof _ -> raise Pgx_eof
-    | `Ok ->
-      let code = Caml.Char.code in
-      (code (Bytes.get b 0) lsl 24) lor (code (Bytes.get b 1) lsl 16)
-      lor (code (Bytes.get b 2) lsl 8) lor (code (Bytes.get b 3))
+    Reader.really_read r b
+    >>| function
+      | `Eof _ -> raise Pgx_eof
+      | `Ok ->
+          let code = Caml.Char.code in
+          (code (Bytes.get b 0) lsl 24)
+          lor (code (Bytes.get b 1) lsl 16)
+          lor (code (Bytes.get b 2) lsl 8)
+          lor code (Bytes.get b 3)
+
   let really_input r s pos len =
-    Reader.really_read r ~pos ~len s >>| function
-    | `Ok -> ()
-    | `Eof _ -> raise Pgx_eof
+    Reader.really_read r ~pos ~len s
+    >>| function `Ok -> () | `Eof _ -> raise Pgx_eof
 
   let close_in = Reader.close
 
   let open_connection sockaddr =
     let get_reader_writer socket =
       let fd = Socket.fd socket in
-      (Reader.create fd, Writer.create fd) in
+      (Reader.create fd, Writer.create fd)
+    in
     match sockaddr with
     | Unix path ->
-      let unix_sockaddr = Tcp.Where_to_connect.of_unix_address (`Unix path) in
-      Tcp.connect_sock unix_sockaddr
-      >>| get_reader_writer
+        let unix_sockaddr =
+          Tcp.Where_to_connect.of_unix_address (`Unix path)
+        in
+        Tcp.connect_sock unix_sockaddr >>| get_reader_writer
     | Inet (host, port) ->
-      let inet_sockaddr = Tcp.Where_to_connect.of_host_and_port
-                            (Host_and_port.create ~host:host ~port:port) in
-      Tcp.connect_sock inet_sockaddr
-      >>| get_reader_writer
+        let inet_sockaddr =
+          Tcp.Where_to_connect.of_host_and_port
+            (Host_and_port.create ~host ~port)
+        in
+        Tcp.connect_sock inet_sockaddr >>| get_reader_writer
 
   (* The unix getlogin syscall can fail *)
   let getlogin () =
-    Unix.getuid ()
-    |> Unix.Passwd.getbyuid_exn
-    >>| fun { name ; _ } -> name
+    Unix.getuid () |> Unix.Passwd.getbyuid_exn >>| fun {name; _} -> name
 
   let debug msg =
-    Print.prerr_endline msg;
+    Print.prerr_endline msg ;
     Writer.flushed (Lazy.force Writer.stderr)
 
   let protect f ~finally = Monitor.protect f ~finally
 
   module Sequencer = struct
     type 'a monad = 'a t
+
     type 'a t = 'a Sequencer.t
 
     let create t = Sequencer.create ~continue_on_error:true t
@@ -93,7 +99,7 @@ module Thread = struct
   end
 end
 
-include (Pgx.Make(Thread))
+include Pgx.Make (Thread)
 
 (* pgx uses configures this value at build time. But this breaks when
    pgx is installed before postgres itself. We prefer to set this variable
@@ -101,39 +107,38 @@ include (Pgx.Make(Thread))
 let default_unix_domain_socket_dir =
   let debian_default = "/var/run/postgresql" in
   Lazy_deferred.create (fun () ->
-    Sys.is_directory debian_default >>| function
-    | `Yes -> debian_default
-    | `No | `Unknown -> "/tmp"
-  )
+      Sys.is_directory debian_default
+      >>| function `Yes -> debian_default | `No | `Unknown -> "/tmp" )
 
 (* Fail if PGDATABASE environment variable is not set. *)
-let check_pgdatabase = lazy (
-  let db = "PGDATABASE" in
-  if Option.is_none (Sys.getenv db)
-  then failwithf "%s environment variable must be set." db ())
+let check_pgdatabase =
+  lazy
+    (let db = "PGDATABASE" in
+     if Option.is_none (Sys.getenv db) then
+       failwithf "%s environment variable must be set." db ())
 
 let connect ?host ?port ?user ?password ?database ?unix_domain_socket_dir
-      ?verbose ?max_message_length () =
-  if Option.is_none database then Lazy.force check_pgdatabase;
-  begin match unix_domain_socket_dir with
+    ?verbose ?max_message_length () =
+  if Option.is_none database then Lazy.force check_pgdatabase ;
+  ( match unix_domain_socket_dir with
   | Some p -> return p
-  | None -> Lazy_deferred.force_exn default_unix_domain_socket_dir
-  end >>= fun unix_domain_socket_dir ->
-  connect ?host ?port ?user ?password ?database ?verbose ?max_message_length ~unix_domain_socket_dir ()
+  | None -> Lazy_deferred.force_exn default_unix_domain_socket_dir )
+  >>= fun unix_domain_socket_dir ->
+  connect ?host ?port ?user ?password ?database ?verbose ?max_message_length
+    ~unix_domain_socket_dir ()
 
 let with_conn ?host ?port ?user ?password ?database ?unix_domain_socket_dir
-      ?verbose ?max_message_length f =
+    ?verbose ?max_message_length f =
   connect ?host ?port ?user ?password ?database ?unix_domain_socket_dir
     ?verbose ?max_message_length ()
   >>= fun dbh ->
-  Monitor.protect (fun () -> f dbh)
-    ~finally:(fun () -> close dbh)
+  Monitor.protect (fun () -> f dbh) ~finally:(fun () -> close dbh)
 
 module Value = struct
   include Pgx.Value
 
   let of_time t =
-  (*
+    (*
        Postgres behaves differently depending on whether the timestamp data type
        includes the timezone or not:
 
@@ -152,7 +157,7 @@ module Value = struct
     Some (Time.to_string_abs ~zone:Time.Zone.utc t)
 
   let to_time' =
-  (*
+    (*
        The time string can come in various forms depending on whether the
        Postgres timestamp used includes the time zone:
 
@@ -169,26 +174,27 @@ module Value = struct
        Without these formattings Time.of_string fails spectacularly
     *)
     let open Re in
-    let tz = seq [ alt [ char '-' ; char '+' ] ; digit ; digit ] in
-    let utctz = seq [ char 'Z' ; eol ] |> compile in
-    let localtz_no_min = seq [ tz ; eol ] |> compile in
-    let localtz = seq [ tz ; char ':' ; digit ; digit ; eol ] |> compile in
+    let tz = seq [alt [char '-'; char '+']; digit; digit] in
+    let utctz = seq [char 'Z'; eol] |> compile in
+    let localtz_no_min = seq [tz; eol] |> compile in
+    let localtz = seq [tz; char ':'; digit; digit; eol] |> compile in
     fun s ->
-      Time.of_string @@
-      match matches utctz s, matches localtz s, matches localtz_no_min s with
+      Time.of_string
+      @@
+      match (matches utctz s, matches localtz s, matches localtz_no_min s) with
       | [], [], [] -> s ^ "Z"
-      | _ , [], [] -> s
-      | [], _ , [] -> s
-      | [], [], _  -> s ^ ":00"
+      | _, [], [] -> s
+      | [], _, [] -> s
+      | [], [], _ -> s ^ ":00"
       (* It either finishes in one of the patterns above or it doesn't *)
-      | _ -> convert_failure "time" s
+      | _ ->
+          convert_failure "time" s
 
   let to_time_exn = required to_time'
 
   let to_time = Option.map ~f:to_time'
 
-  let of_date d =
-    Some (Date.to_string d)
+  let of_date d = Some (Date.to_string d)
 
   let to_date' = Date.of_string
 
