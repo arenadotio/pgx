@@ -24,9 +24,7 @@ type oid = int32 [@@deriving sexp]
 
 module Isolation = Isolation
 
-module Access : sig
-  type t = Read_write | Read_only [@@deriving sexp]
-end
+module Access = Access
 
 module Result_desc : sig
   type t =
