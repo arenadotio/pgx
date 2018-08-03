@@ -20,22 +20,12 @@
 *)
 module type IO = Io_intf.S
 
-type oid = int32 [@@deriving sexp]
+open Types
 
 module Isolation = Isolation
-
 module Access = Access
 
-module Result_desc : sig
-  type t =
-    { name : string   (** Field name. *)
-    ; table : oid option   (** OID of table. *)
-    ; column : int option   (** Column number of field in table. *)
-    ; field_type : oid   (** The type of the field. *)
-    ; length : int    (** Length of the field. *)
-    ; modifier : int32 }   (** Type modifier. *)
-  [@@deriving sexp]
-end
+module Result_desc = Result_desc
 
 module Value = Pgx_value
 
