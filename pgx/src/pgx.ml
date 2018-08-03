@@ -572,37 +572,7 @@ type params_description = oid list [@@deriving sexp]
 
 exception PostgreSQL_Error of string * Error_response.t [@@deriving sexp]
 
-module type IO = sig
-  type 'a t
-  val return : 'a -> 'a t
-  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
-  val catch : (unit -> 'a t) -> (exn -> 'a t) -> 'a t
-  type in_channel
-  type out_channel
-  type sockaddr =
-    | Unix of string
-    | Inet of string * int
-  val open_connection : sockaddr -> (in_channel * out_channel) t
-  val output_char : out_channel -> char -> unit t
-  val output_binary_int : out_channel -> int -> unit t
-  val output_string : out_channel -> string -> unit t
-  val flush : out_channel -> unit t
-  val input_char : in_channel -> char t
-  val input_binary_int : in_channel -> int t
-  val really_input : in_channel -> Bytes.t -> int -> int -> unit t
-  val close_in : in_channel -> unit t
-  val getlogin : unit -> string t
-  val debug : string -> unit t
-  val protect :  (unit -> 'a t) -> finally:(unit -> unit t) -> 'a t
-
-  module Sequencer : sig
-    type 'a monad = 'a t
-    type 'a t
-
-    val create : 'a -> 'a t
-    val enqueue : 'a t -> ('a -> 'b monad) -> 'b monad
-  end
-end
+module type IO = Io_intf.S
 
 module type S = sig
   type t
