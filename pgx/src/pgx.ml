@@ -48,38 +48,7 @@ module Ready = struct
     | c   -> Other c
 end
 
-module Row_desc = struct
-  type t =
-    { name: string
-    ; table: int32
-    ; col: int
-    ; oid: int32
-    ; len: int
-    ; modifier: int32
-    ; format: int }
-  [@@deriving sexp]
-
-end
-
-module Result_desc = struct
-  type t =
-    { name : string
-    ; table : oid option
-    ; column : int option
-    ; field_type : oid
-    ; length : int
-    ; modifier : int32 }
-  [@@deriving sexp]
-
-  let of_row_desc r =
-    let open Row_desc in
-    { name = r.name
-    ; table = if r.table = 0l then None else Some r.table
-    ; column = if r.col = 0 then None else Some r.col
-    ; field_type = r.oid
-    ; length = r.len
-    ; modifier = r.modifier }
-end
+module Result_desc = Result_desc
 
 (* We get a message from postgres that we didn't expect. Almost always a bug
    in our bindings *)
