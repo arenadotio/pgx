@@ -22,14 +22,7 @@ module type IO = Io_intf.S
 
 type oid = int32 [@@deriving sexp]
 
-module Isolation : sig
-  type t =
-    | Serializable
-    | Repeatable_read
-    | Read_committed
-    | Read_uncommitted
-  [@@deriving sexp]
-end
+module Isolation = Isolation
 
 module Access : sig
   type t = Read_write | Read_only [@@deriving sexp]
