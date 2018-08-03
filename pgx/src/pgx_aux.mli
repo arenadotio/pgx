@@ -22,3 +22,7 @@ module List : sig
 
   val iteri : (int -> 'a -> unit) -> 'a list -> unit
 end
+
+(** Necessary for ppx_assert *)
+val compare_string : string -> string -> int
+val compare_bool : bool -> bool -> int

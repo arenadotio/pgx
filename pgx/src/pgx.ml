@@ -23,11 +23,7 @@ open Pgx_aux
 open Printf
 open Sexplib0.Sexp_conv
 
-(* Necessary for ppx_assert *)
-let compare_string = Pervasives.compare
-let compare_bool = Pervasives.compare
-
-type oid = int32 [@@deriving sexp]
+include Types
 
 module Isolation = Isolation
 
@@ -61,72 +57,7 @@ let fail_msg fmt =
 exception Parsing_failure of string [@@deriving sexp]
 let fail_parse str = raise (Parsing_failure str)
 
-module Error_response = struct
-  type t =
-    { code: string
-    ; severity: string
-    ; message:  string
-    ; custom: (char * string) list }
-  [@@deriving sexp]
-
-  let should_print t ~verbose =
-    if verbose < 1 then false
-    else if verbose = 1 then
-      match t.severity with
-      | "ERROR" | "FATAL" | "PANIC" -> true
-      | _ -> false
-    else true
-
-  let to_string ?(verbose=false) t =
-    let msg = sprintf "%s: %s: %s" t.severity t.code t.message in
-    let field_info =
-      if verbose then
-        List.map (fun (field_type, field) ->
-          sprintf "%c: %s" field_type field) t.custom
-      else [] in
-    String.concat "\n" (msg :: field_info)
-
-  let%test_module "to_string and should_print inline tests" =
-    (module struct
-      let info_msg =
-        { code = "5"
-        ; severity = "INFO"
-        ; message = "test"
-        ; custom = [('a', "string"); ('c', "field")] }
-      let error_msg = { info_msg with severity = "ERROR" }
-
-      let%test_unit "to_string tests: print msg when verbose = false" =
-        let verbose = false in
-        [%test_result: string] ~expect:"INFO: 5: test" (to_string ~verbose info_msg);
-        [%test_result: string] ~expect:"ERROR: 5: test" (to_string ~verbose error_msg)
-
-      let%test_unit "to_string tests: print msg and fields when verbose = true" =
-        let verbose = true in
-        [%test_result: string] ~expect:"ERROR: 5: test\na: string\nc: field"
-          (to_string ~verbose error_msg)
-
-      let%test_unit "should_print tests: should not print when verbose = 0" =
-        let verbose = 0 in
-        [%test_result: bool] ~expect:false (should_print ~verbose info_msg);
-        [%test_result: bool] ~expect:false (should_print ~verbose error_msg)
-
-      let%test_unit "should_print tests: print if verbose = 1 and t.severity \
-                     is one of three: INFO, ERROR, PANIC" =
-        let verbose = 1 in
-        [ "FATAL" ; "ERROR" ; "PANIC" ]
-        |> List.iter (fun severity ->
-          let msg = { info_msg with severity } in
-          [%test_result: bool] ~expect:true (should_print msg ~verbose));
-        [%test_result: bool] ~expect:false (should_print info_msg ~verbose)
-
-      let%test_unit "should_print tests: print if verbose > 1 no matter t.severity" =
-        let verbose = 2 in
-        [ "INFO"; "FATAL" ; "ERROR" ; "PANIC" ]
-        |> List.iter (fun severity ->
-          let msg = { info_msg with severity } in
-          [%test_result: bool] ~expect:true (should_print msg ~verbose));
-    end)
-end
+module Error_response = Error_response
 
 module Message_in = struct
   type copy_format =
@@ -513,14 +444,6 @@ let deserialize_string str =
   else deserialize_string_escape str
 
 module Value = Pgx_value
-
-type param = Value.t [@@deriving sexp_of] (** None is NULL. *)
-type result = Value.t [@@deriving sexp_of] (** None is NULL. *)
-type row = Value.t list [@@deriving sexp_of] (** One row is a list of fields. *)
-
-type params_description = oid list [@@deriving sexp]
-
-exception PostgreSQL_Error of string * Error_response.t [@@deriving sexp]
 
 module type IO = Io_intf.S
 

@@ -65,3 +65,6 @@ module List = struct
       | hd :: tl -> f i hd; loop (i+1) tl in
     loop 0 xs
 end
+
+let compare_string = Pervasives.compare
+let compare_bool = Pervasives.compare
