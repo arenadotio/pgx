@@ -78,8 +78,8 @@ module Thread = struct
     >>| fun { name ; _ } -> name
 
   let debug msg =
-    Print.prerr_endline msg;
-    Writer.flushed (Lazy.force Writer.stderr)
+    Log.Global.debug ~tags:["lib", "pgx_async"] "%s" msg;
+    Log.Global.flushed ()
 
   let protect f ~finally = Monitor.protect f ~finally
 
