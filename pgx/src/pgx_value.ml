@@ -268,8 +268,8 @@ let to_point = Option.map to_point'
 
 let of_string t = Some t
 
-let to_string_exn = required (fun t -> t)
 let to_string t = t
+let to_string_exn = required to_string
 
 let unit = Some ""
 
