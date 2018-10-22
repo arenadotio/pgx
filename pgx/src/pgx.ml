@@ -753,7 +753,7 @@ module Make (Thread : IO) = struct
     ; mutable in_transaction: bool
     ; verbose : int
     ; max_message_length : int
-    ; mutable prepared_num : int (* Used to generate statement names *) }
+    ; mutable prepared_num : int64 (* Used to generate statement names *) }
   [@@deriving sexp]
 
   type t = conn Sequencer.t
@@ -951,7 +951,7 @@ module Make (Thread : IO) = struct
       ; in_transaction = false
       ; verbose
       ; max_message_length
-      ; prepared_num = 0 } in
+      ; prepared_num = Int64.of_int 0 } in
 
     (* Send the StartUpMessage.  NB. At present we do not support SSL. *)
     let msg = Message_out.Startup_message { Message_out.user ; database } in
@@ -1064,8 +1064,8 @@ module Make (Thread : IO) = struct
             | Some name -> name
             | None ->
               let n = conn.prepared_num in
-              conn.prepared_num <- n + 1;
-              sprintf "pgx_prepared_%d" n
+              conn.prepared_num <- Int64.succ n;
+              sprintf "pgx_prepared_%Ld" n
           in
           send_message conn
             (Message_out.Prepare { Message_out.name ; query ; types })
