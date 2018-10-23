@@ -1,4 +1,4 @@
-open Sexplib.Conv
+open Sexplib0.Sexp_conv
 open Pgx_aux
 
 type t = string option [@@deriving sexp_of]

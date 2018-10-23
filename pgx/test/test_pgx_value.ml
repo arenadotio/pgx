@@ -1,8 +1,8 @@
 open OUnit2
 open Pgx_aux
 open Printf
-open Sexplib
-open Sexplib.Conv
+open Sexplib0
+open Sexplib0.Sexp_conv
 
 open Pgx.Value
 
