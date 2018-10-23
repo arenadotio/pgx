@@ -21,7 +21,7 @@
 
 open Pgx_aux
 open Printf
-open Sexplib.Conv
+open Sexplib0.Sexp_conv
 
 (* Necessary for ppx_assert *)
 let compare_string = Pervasives.compare
@@ -211,7 +211,7 @@ module Message_in = struct
     | UnknownMessage of char * string
   [@@deriving sexp]
 
-  let to_string t = Sexplib.Sexp.to_string_hum (sexp_of_t t)
+  let to_string t = Sexplib0.Sexp.to_string_hum (sexp_of_t t)
 
   let read (typ, msg) =
     let pos = ref 0 in
