@@ -1325,7 +1325,17 @@ module Make (Thread : IO) = struct
         simple_query' dbh query)
 
   let execute ?(params=[]) db query =
-    Prepared.(with_prepare db ~query ~f:(fun s ->
+    match params with
+    | [] ->
+      simple_query db query
+      >>| (function
+        | rows :: [] -> rows
+        | results ->
+          fail_msg "Pgx.execute: Query returned %d result sets but \
+                    execute should only ever return one. Query was: %s"
+            (List.length results) query)
+    | _ ->
+      Prepared.(with_prepare db ~query ~f:(fun s ->
         execute s ~params))
 
   let execute_iter ?(params=[]) db query ~f =
