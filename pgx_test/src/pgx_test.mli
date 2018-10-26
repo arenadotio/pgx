@@ -1,5 +1,3 @@
-open OUnit2
-
 module type S = sig
   type 'a monad
   val run_tests : unit -> unit monad
