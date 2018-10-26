@@ -1,0 +1,10 @@
+(executable
+  (name test_pgx_unix)
+  (libraries pgx_test pgx_unix)
+	(preprocess (pps ppx_jane)))
+
+(alias
+  (name runtest)
+  (package pgx_unix)
+  (deps (:exe test_pgx_unix.exe))
+  (action (run %{exe})))
