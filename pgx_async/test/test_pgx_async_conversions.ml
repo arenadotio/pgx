@@ -1,5 +1,4 @@
 open Core
-open Async
 open OUnit2
 
 module Value = Pgx_async.Value
