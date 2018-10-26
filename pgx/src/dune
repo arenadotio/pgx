@@ -1,0 +1,6 @@
+(library
+  (public_name pgx)
+  (wrapped false)
+  (inline_tests (flags (-verbose)))
+  (libraries uuidm re sexplib0)
+  (preprocess (pps ppx_jane bisect_ppx -conditional)))

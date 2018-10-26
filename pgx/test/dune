@@ -1,0 +1,10 @@
+(executables
+  (names test_pgx_value)
+  (libraries pgx oUnit)
+	(preprocess (pps ppx_jane)))
+
+(alias
+  (name runtest)
+  (package pgx)
+  (deps (:exe test_pgx_value.exe))
+  (action (run %{exe})))
