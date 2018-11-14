@@ -21,6 +21,9 @@ module List : sig
   include module type of List
 
   val iteri : (int -> 'a -> unit) -> 'a list -> unit
+
+  (** Like the built-in [List.map], but tail-recursive *)
+  val map : ('a -> 'b) -> 'a list -> 'b list
 end
 
 (** Necessary for ppx_assert *)
