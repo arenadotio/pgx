@@ -64,6 +64,10 @@ module List = struct
       | [] -> ()
       | hd :: tl -> f i hd; loop (i+1) tl in
     loop 0 xs
+
+  let map f xs =
+    List.rev_map f xs
+    |> List.rev
 end
 
 let compare_string = Pervasives.compare
