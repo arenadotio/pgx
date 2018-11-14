@@ -1041,17 +1041,16 @@ module Make (Thread : IO) = struct
                     execute should only ever return one. Query was: %s"
             (List.length results) query)
     | _ ->
-      (* The unnamed prepared statement doesn't need to be un-prepared *)
-      Prepared.prepare db ~name:"" ~query
-      >>= Prepared.execute ~params
+      Prepared.(with_prepare db ~query ~f:(fun s ->
+        execute s ~params))
 
   let execute_iter ?(params=[]) db query ~f =
-    Prepared.prepare db ~name:"" ~query
-    >>= Prepared.execute_iter ~params ~f
+    Prepared.(with_prepare db ~query ~f:(fun s ->
+      execute_iter s ~params ~f))
 
   let execute_fold ?(params=[]) db query ~init ~f =
-    Prepared.prepare db ~name:"" ~query
-    >>= Prepared.execute_fold ~params ~init ~f
+    Prepared.(with_prepare db ~query ~f:(fun s ->
+      execute_fold s ~params ~init ~f))
 
   let begin_work ?isolation ?access ?deferrable seq =
     Sequencer.enqueue seq (fun conn ->
