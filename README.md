@@ -38,7 +38,7 @@ opam pin add pgx https://github.com/arenadotio/pgx.git
 
 See [pgx_async/bin/pgx_async_example.ml](pgx_async/bin/pgx_async_example.ml) for
 a complete example of the high-level functional interface. To translate the
-example to Lwt, replace `Pgx_async` with `Pgx_lwt` and `>>| with `>|=`. To
+example to Lwt, replace `Pgx_async` with `Pgx_lwt` and `>>|` with `>|=`. To
 translate it to synchronous IO / standard-library-only, use `Pgx_unix` and
 replace both `>>|` and `>>=` with `|>`, or just replace `>>| fun () ->` with `;`.
 
