@@ -54,6 +54,8 @@ module Simple_thread = struct
   let input_binary_int = input_binary_int
   let really_input = really_input
   let close_in = close_in
+
+  (* The unix getlogin syscall can fail *)
   let getlogin () =
     Unix.getuid ()
     |> Unix.getpwuid

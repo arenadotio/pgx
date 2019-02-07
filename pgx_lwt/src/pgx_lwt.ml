@@ -52,7 +52,11 @@ module Thread = struct
        Unix.ADDR_INET (addr, port))
     >>= Lwt_io.open_connection
 
-  let getlogin = Lwt_unix.getlogin
+  (* The unix getlogin syscall can fail *)
+  let getlogin () =
+    Unix.getuid ()
+    |> Lwt_unix.getpwuid
+    >|= fun { Lwt_unix.pw_name ; _ } -> pw_name
 
   let debug = Lwt_io.eprintl
 
