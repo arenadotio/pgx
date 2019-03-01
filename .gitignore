@@ -1,4 +1,7 @@
 _build
 _coverage
+_esy
 *.install
 .merlin
+esy.lock
+node_modules
