@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: ocaml/opam:ubuntu-17.04_ocaml-4.05.0
+      - image: ocaml/opam2:ubuntu-18.04-ocaml-4.06
         environment:
           PGUSER: pgx
           PGDATABASE: pgx-test
@@ -19,7 +19,7 @@ jobs:
       - run:
           name: Update opam
           command: |
-            opam remote remove default
+            opam remote remove default --all
             opam remote add default https://opam.ocaml.org
       - run:
           name: Pin packages
