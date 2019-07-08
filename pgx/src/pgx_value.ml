@@ -135,11 +135,11 @@ let to_inet' =
   fun str ->
     try
       let subs = Re.exec re str in
-      let addr = Unix.inet_addr_of_string (Re.get subs 1) in
+      let addr = Unix.inet_addr_of_string (Re.Group.get subs 1) in
       (* optional match *)
-      let mask = try (Re.get subs 3) with Not_found -> "" in
+      let mask = try (Re.Group.get subs 3) with Not_found -> "" in
       if mask = ""
-      then (addr, (if (Re.get subs 2) = "." then 32 else 128))
+      then (addr, (if (Re.Group.get subs 2) = "." then 32 else 128))
       else (addr, int_of_string mask)
     with _ -> convert_failure "inet" str
 
@@ -258,7 +258,7 @@ let to_point' =
   fun str ->
     try
       let subs = Re.exec point_re str in
-      (float_of_string (Re.get subs 1), float_of_string (Re.get subs 2))
+      (float_of_string (Re.Group.get subs 1), float_of_string (Re.Group.get subs 2))
     with
     | e -> Printexc.to_string e |> print_endline; convert_failure "point" str
 
