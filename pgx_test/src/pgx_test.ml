@@ -455,12 +455,11 @@ module Make_tests (IO : Pgx.IO) = struct
       ; "binary string handling", (fun () ->
           let all_chars = String.init 255 char_of_int in
           with_conn (fun db ->
-            [ "SELECT decode($1, 'base64')",
-              Base64.encode_string all_chars, all_chars
+            [ "SELECT decode($1, 'base64')", B64.encode all_chars, all_chars
             (* Postgres adds whitespace to base64 encodings, so we strip it
                back out *)
             ; "SELECT regexp_replace(encode($1, 'base64'), '\\s', '', 'g')",
-              all_chars, Base64.encode_string all_chars ]
+              all_chars, B64.encode all_chars ]
             |> deferred_list_map ~f:(fun (query, param, expect) ->
               let params = [ param |> Pgx.Value.of_string ] in
               execute ~params db query
