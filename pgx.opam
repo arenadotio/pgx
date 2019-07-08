@@ -21,6 +21,6 @@ depends: [
   "bisect_ppx" {build & >= "1.3.1"}
   "dune" {build & >= "1.1.0"}
 
-  "base64" {>= "3.1.0"}
+  "base64"
   "ounit"
 ]
