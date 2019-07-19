@@ -146,6 +146,13 @@ module type S = sig
       -> f:(row -> unit monad)
       -> unit monad
 
+    val execute_map
+      : ?portal:string
+      -> s
+      -> params:param list
+      -> f:(row -> 'a monad)
+      -> 'a list monad
+
     val execute_many
       : s
       -> params:param list list
@@ -180,6 +187,13 @@ module type S = sig
     -> init:'accum
     -> f:('accum -> row -> 'accum monad)
     -> 'accum monad
+
+  val execute_map
+    : ?params:param list
+    -> t
+    -> string
+    -> f:(row -> 'a monad)
+    -> 'a list monad
 
   val execute_iter
     : ?params:param list

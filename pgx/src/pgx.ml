@@ -913,10 +913,15 @@ module Make (Thread : IO) = struct
       >>| fun () ->
       !acc
 
-    let execute ?portal s ~params =
-      execute_fold s ?portal ~params ~init:[]
-        ~f:(fun acc fields -> return (fields :: acc))
+    let execute_map ?portal s ~params ~f =
+      execute_fold ?portal s ~params ~init:[] ~f:(fun acc row ->
+        f row
+        >>| fun res ->
+        res :: acc)
       >>| List.rev
+
+    let execute ?portal s ~params =
+      execute_map s ?portal ~params ~f:return
 
     let execute_many s ~params =
       List.fold_left (fun acc params ->
@@ -1051,6 +1056,10 @@ module Make (Thread : IO) = struct
   let execute_fold ?(params=[]) db query ~init ~f =
     Prepared.(with_prepare db ~query ~f:(fun s ->
       execute_fold s ~params ~init ~f))
+
+  let execute_map ?(params=[]) db query ~f =
+    Prepared.(with_prepare db ~query ~f:(fun s ->
+      execute_map s ~params ~f))
 
   let begin_work ?isolation ?access ?deferrable seq =
     Sequencer.enqueue seq (fun conn ->
