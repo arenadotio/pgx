@@ -19,6 +19,11 @@ val with_conn
   -> (t -> 'a Deferred.t)
   -> 'a Deferred.t
 
+(** Like [execute] but returns a pipe so you can operate on the results before they have all returned.
+    Note that [execute_iter] and [execute_fold] can perform significantly better because they don't have
+    as much overhead. *)
+val execute_pipe : ?params:Pgx.row -> t -> string -> Pgx.row Pipe.Reader.t
+
 module Value : sig
   include Pgx_value_intf.S
 
