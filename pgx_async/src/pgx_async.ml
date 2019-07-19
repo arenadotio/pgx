@@ -129,6 +129,11 @@ let with_conn ?host ?port ?user ?password ?database ?unix_domain_socket_dir
   Monitor.protect (fun () -> f dbh)
     ~finally:(fun () -> close dbh)
 
+let execute_pipe ?params db query =
+  Pipe.create_reader ~close_on_exception:false @@ fun writer ->
+  execute_iter ?params db query ~f:(fun row ->
+    Pipe.write_if_open writer row)
+
 module Value = struct
   include Pgx.Value
 
