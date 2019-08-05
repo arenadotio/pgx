@@ -18,7 +18,7 @@ depends: [
   "re"
   "sexplib0" {>= "v0.11.0"}
 
-  "bisect_ppx" {build & >= "1.3.1"}
+  "bisect_ppx" {build & >= "1.4.1"}
   "dune" {build & >= "1.1.0"}
 
   "base64" {with-test & < "3.0.0"}
