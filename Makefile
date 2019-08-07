@@ -18,6 +18,8 @@ coveralls: clean
 	  -service-name circle-ci -repo-token $(TOKEN) \
 	  -service-job-id ${CIRCLE_BUILD_NUM} \
 	  `find . -name 'bisect*.out'`
+	PR_NAME= echo ${CI_PULL_REQUEST} | sed 's:.*/::'
+	@sed -i '0,/{/{"service_pull_request": "$(PR_NAME)",' ./coverage.json
 	@curl -L -F json_file=@./coverage.json https://coveralls.io/api/v1/jobs
 
 test:
