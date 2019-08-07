@@ -15,7 +15,8 @@ coverage: clean
 coveralls: clean
 	@BISECT_ENABLE=YES dune runtest
 	@bisect-ppx-report -I _build/default/ -coveralls coverage.json \
-	  -service-name circleci -repo-token $(TOKEN) \
+	  -service-name circle-ci -repo-token $(TOKEN) \
+	  -service-job-id ${CIRCLE_BUILD_NUM} \
 	  `find . -name 'bisect*.out'`
 	@curl -L -F json_file=@./coverage.json https://coveralls.io/api/v1/jobs
 
