@@ -101,18 +101,18 @@ let to_hstore_exn = required to_hstore'
 
 let to_hstore = Option.map to_hstore'
 
-type inet = Unix.inet_addr * int
+type inet = Ipaddr.t * int
 
 let sexp_of_inet (addr, mask) =
-  [%sexp_of: string * int] (Unix.string_of_inet_addr addr, mask)
+  [%sexp_of: string * int] (Ipaddr.to_string addr, mask)
 
 let of_inet (addr, mask) =
   let hostmask =
-    if Unix.domain_of_sockaddr (Unix.ADDR_INET(addr, 1)) = Unix.PF_INET6
-    then 128
-    else 32
+    match addr with
+    | Ipaddr.V4 _ -> 32
+    | Ipaddr.V6 _ -> 128
   in
-  let addr = Unix.string_of_inet_addr addr
+  let addr = Ipaddr.to_string addr
   in
   if mask = hostmask
   then Some addr
@@ -135,7 +135,7 @@ let to_inet' =
   fun str ->
     try
       let subs = Re.exec re str in
-      let addr = Unix.inet_addr_of_string (Re.Group.get subs 1) in
+      let addr = Ipaddr.of_string_exn (Re.Group.get subs 1) in
       (* optional match *)
       let mask = try (Re.Group.get subs 3) with Not_found -> "" in
       if mask = ""

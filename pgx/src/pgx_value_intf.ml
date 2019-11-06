@@ -24,7 +24,7 @@ module type S = sig
   val to_hstore_exn : t -> hstore
   val to_hstore : t -> hstore option
 
-  type inet = Unix.inet_addr * int [@@deriving sexp_of]
+  type inet = Ipaddr.t * int [@@deriving sexp_of]
   val of_inet : inet -> t
   val to_inet_exn : t -> inet
   val to_inet : t -> inet option

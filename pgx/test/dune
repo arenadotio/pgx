@@ -1,6 +1,6 @@
 (executables
   (names test_pgx_value)
-  (libraries pgx oUnit)
+  (libraries ipaddr pgx oUnit)
 	(preprocess (pps ppx_jane)))
 
 (alias
