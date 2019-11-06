@@ -109,7 +109,7 @@ let () =
        ; "192.168.5.9", 0
        ; "fe80::0202:b3ff:fe1e:8329", 128 ]
        |> List.map (fun (addr, mask) ->
-         Unix.inet_addr_of_string addr, mask))
+         Ipaddr.of_string_exn addr, mask))
       [ "" ; "asd" ; "192.168.1.a/32" ]
   ; make_test "int" sexp_of_int
       of_int to_int to_int_exn
@@ -144,7 +144,7 @@ let () =
         ; of_hstore []
         ; of_hstore [ "key", Some "value" ]
         ; of_hstore [ "key2", None ]
-        ; of_inet (Unix.inet_addr_of_string "8.8.8.8", 4)
+        ; of_inet (Ipaddr.of_string_exn "8.8.8.8", 4)
         ; of_int 99
         ; of_int32 (Int32.of_int 101)
         ; of_int64 (Int64.of_int 1102931)

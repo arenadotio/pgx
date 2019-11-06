@@ -12,6 +12,7 @@ build: [
 ]
 
 depends: [
+  "ipaddr"
   "ocaml" {>= "4.05.0"}
   "ppx_jane"
   "uuidm"
