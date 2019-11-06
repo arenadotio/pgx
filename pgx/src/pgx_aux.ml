@@ -70,5 +70,5 @@ module List = struct
     |> List.rev
 end
 
-let compare_string = Pervasives.compare
-let compare_bool = Pervasives.compare
+let compare_string = String.compare
+let compare_bool (x : bool) (y : bool) = compare x y (* Bool.compare from 4.08 *)

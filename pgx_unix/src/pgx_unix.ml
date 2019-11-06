@@ -29,8 +29,8 @@ module Simple_thread = struct
   type sockaddr =
     | Unix of string
     | Inet of string * int
-  type in_channel = Pervasives.in_channel
-  type out_channel = Pervasives.out_channel
+  type nonrec in_channel = in_channel
+  type nonrec out_channel = out_channel
 
   let open_connection sockaddr =
     let std_socket =
