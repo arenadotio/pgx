@@ -923,6 +923,15 @@ module Make (Thread : IO) = struct
     let execute ?portal s ~params =
       execute_map s ?portal ~params ~f:return
 
+    let execute_unit ?portal s ~params =
+      execute ?portal s ~params
+      >>| function
+      | [ ]
+      | [ [ ] ] -> ()
+      | results -> fail_msg !"Pgx.execute_unit: Query returned a non-empty result but \
+                              execute_unit was expecting no result and found '%{sexp:row list}'"
+                     results
+
     let execute_many s ~params =
       List.fold_left (fun acc params ->
         acc
@@ -1048,6 +1057,16 @@ module Make (Thread : IO) = struct
     | _ ->
       Prepared.(with_prepare db ~query ~f:(fun s ->
         execute s ~params))
+
+  let execute_unit ?params db query =
+    execute ?params db query
+    >>| function
+    | [ ]
+    | [ [ ] ] -> ()
+    | results ->
+      fail_msg !"Pgx.execute_unit: Query returned a non-empty result but \
+                 execute_unit was expecting no result. Query was: %s, with results '%{sexp:row list}'"
+        query results
 
   let execute_iter ?(params=[]) db query ~f =
     Prepared.(with_prepare db ~query ~f:(fun s ->
