@@ -131,6 +131,14 @@ module type S = sig
         This is only important if you want to call {!describe_portal}
         to find out the result types. *)
 
+    val execute_unit
+      : ?portal:string
+      -> s
+      -> params:param list
+      -> unit monad
+    (** [execute_unit ?portal s ?params] same as execute, but intended
+        for database calls that have side-affects rather than returning results *)
+
     val execute_fold
       : ?portal:string
       -> s
@@ -179,6 +187,10 @@ module type S = sig
   val execute : ?params:row -> t -> string -> row list monad
   (** [execute conn ?params query] prepares and executes the statement
       [query] and returns the result. *)
+
+  val execute_unit : ?params:row -> t -> string -> unit monad
+  (** [execute_unit conn ?params query ] same as execute, but intended
+      for database calls that have side-affects rather than returning results *)
 
   val execute_fold
     : ?params:param list
