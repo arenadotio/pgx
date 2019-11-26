@@ -1,12 +1,7 @@
-open Core
-open Async
+module Alcotest_io = struct
+  let test_case name speed f = Alcotest_async.test_case name speed f
+end
 
-include Pgx_test.Make_tests (Pgx_async.Thread)
+include Pgx_test.Make_tests (Pgx_async.Thread) (Alcotest_io)
 
-let () =
-  Scheduler.go_main ~main:(fun () ->
-    ignore
-      (run_tests ()
-       >>| fun () ->
-       Async.shutdown 0)) ()
-  |> never_returns
+let () = run_tests ()

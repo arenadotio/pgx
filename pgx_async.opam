@@ -17,6 +17,7 @@ depends: [
   "pgx"
   "ppx_jane"
 
-  "base64" {test}
-  "ounit" {test}
+  "alcotest" {with-test}
+  "alcotest-async" {with-test}
+  "base64" {with-test}
 ]

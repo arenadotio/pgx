@@ -1,4 +1,3 @@
 (library
   (name pgx_test)
-  (libraries base64 pgx oUnit)
-  (preprocess (pps ppx_jane)))
+  (libraries alcotest base64 pgx))

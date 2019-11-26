@@ -1,7 +1,6 @@
 (executable
   (name test_pgx_lwt)
-  (libraries pgx_test pgx_lwt)
-	(preprocess (pps ppx_jane)))
+  (libraries alcotest alcotest-lwt pgx_test pgx_lwt))
 
 (alias
   (name runtest)

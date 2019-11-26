@@ -1,7 +1,6 @@
 (executables
   (names test_pgx_async test_pgx_async_conversions)
-  (libraries pgx_async pgx_test oUnit)
-	(preprocess (pps ppx_jane)))
+  (libraries alcotest alcotest-async pgx_async pgx_test))
 
 (alias
   (name runtest)
