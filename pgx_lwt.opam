@@ -14,9 +14,9 @@ build: [
 depends: [
   "ocaml" {>= "4.05.0"}
   "pgx"
-  "ppx_jane"
   "lwt"
 
-  "base64" {test}
-  "ounit" {test}
+  "alcotest" {with-test}
+  "alcotest-lwt" {with-test}
+  "base64" {with-test}
 ]

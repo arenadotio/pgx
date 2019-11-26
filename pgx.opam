@@ -14,7 +14,7 @@ build: [
 depends: [
   "ipaddr"
   "ocaml" {>= "4.05.0"}
-  "ppx_jane"
+  "ppx_sexp_conv"
   "uuidm"
   "re"
   "sexplib0" {>= "v0.11.0"}
@@ -22,6 +22,6 @@ depends: [
   "bisect_ppx" {build & >= "1.4.1"}
   "dune" {build & >= "1.1.0"}
 
+  "alcotest" {with-test}
   "base64" {with-test & < "3.0.0"}
-  "ounit" {with-test}
 ]

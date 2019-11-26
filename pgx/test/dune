@@ -1,7 +1,12 @@
 (executables
-  (names test_pgx_value)
-  (libraries ipaddr pgx oUnit)
-	(preprocess (pps ppx_jane)))
+  (names test_error_response test_pgx_value)
+  (libraries alcotest ipaddr pgx))
+
+(alias
+  (name runtest)
+  (package pgx)
+  (deps (:exe test_error_response.exe))
+  (action (run %{exe})))
 
 (alias
   (name runtest)
