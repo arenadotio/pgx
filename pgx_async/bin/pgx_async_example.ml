@@ -9,7 +9,7 @@ module Employee = struct
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL UNIQUE);
     |}
-    |> Deferred.ignore
+    |> Deferred.ignore_m
 
   (* This function lets us insert multiple users relatively efficiently *)
   let insert_many db names =
@@ -41,7 +41,7 @@ module Facility = struct
 
       CREATE INDEX facility_director_id ON Facility (director_id);
     |}
-    |> Deferred.ignore
+    |> Deferred.ignore_m
 
   let insert ~name ?director_id db =
     let params = Pgx_async.Value.[ of_string name ; opt of_int director_id ] in
@@ -78,7 +78,7 @@ module Facility = struct
     Pgx_async.execute db ~params {|
       UPDATE Facility SET director_id = $1 WHERE id = $2
     |}
-    |> Deferred.ignore
+    |> Deferred.ignore_m
 end
 
 let setup db =

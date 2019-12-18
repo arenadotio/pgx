@@ -453,8 +453,8 @@ module Make (Thread : IO) = struct
   open Thread
 
   type conn =
-    { ichan: in_channel sexp_opaque (* In_channel wrapping socket. *)
-    ; chan: out_channel sexp_opaque (* Out_channel wrapping socket. *)
+    { ichan: (in_channel [@sexp.opaque]) (* In_channel wrapping socket. *)
+    ; chan: (out_channel [@sexp.opaque]) (* Out_channel wrapping socket. *)
     ; id: int (* unique id for this connection. *)
     ; mutable in_transaction: bool
     ; verbose : int
@@ -473,7 +473,7 @@ module Make (Thread : IO) = struct
      stderr.*)
   let debug_protocol =
     try
-      ignore (Sys.getenv "PGX_DEBUG");
+      ignore (Sys.getenv "PGX_DEBUG" : string);
       true
     with Not_found -> false
 
@@ -760,7 +760,7 @@ module Make (Thread : IO) = struct
 
   module Prepared = struct
     type s =
-      { conn : conn Sequencer.t sexp_opaque
+      { conn : (conn Sequencer.t [@sexp.opaque])
       ; name : string }
     [@@deriving sexp_of]
 
