@@ -41,7 +41,7 @@ struct
 
   let force_tests =
     try
-      Unix.getenv "PGX_FORCE_TESTS" |> ignore;
+      (Unix.getenv "PGX_FORCE_TESTS" : string) |> ignore;
       true
     with Not_found -> false
 

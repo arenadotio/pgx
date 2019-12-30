@@ -453,14 +453,14 @@ module Make (Thread : IO) = struct
   open Thread
 
   type conn =
-    { ichan: in_channel sexp_opaque (* In_channel wrapping socket. *)
-    ; chan: out_channel sexp_opaque (* Out_channel wrapping socket. *)
+    { ichan: in_channel (* In_channel wrapping socket. *)
+    ; chan: out_channel (* Out_channel wrapping socket. *)
     ; id: int (* unique id for this connection. *)
     ; mutable in_transaction: bool
     ; verbose : int
     ; max_message_length : int
     ; mutable prepared_num : int64 (* Used to generate statement names *) }
-  [@@deriving sexp]
+  [@@deriving sexp_of]
 
   type t = conn Sequencer.t
 
@@ -473,7 +473,7 @@ module Make (Thread : IO) = struct
      stderr.*)
   let debug_protocol =
     try
-      ignore (Sys.getenv "PGX_DEBUG");
+      ignore ((Sys.getenv "PGX_DEBUG") : string);
       true
     with Not_found -> false
 
@@ -760,9 +760,14 @@ module Make (Thread : IO) = struct
 
   module Prepared = struct
     type s =
-      { conn : conn Sequencer.t sexp_opaque
+      { conn : conn Sequencer.t
       ; name : string }
-    [@@deriving sexp_of]
+
+    let sexp_of_s { name; _ } =
+      Sexplib0.Sexp.List [
+        Sexplib0.Sexp.Atom "<opaque>"
+      ; sexp_of_string name
+      ]
 
     let prepare ?name ?(types = []) seq ~query =
       Sequencer.enqueue seq (fun conn ->

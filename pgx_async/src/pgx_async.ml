@@ -27,6 +27,9 @@ module Thread = struct
   type in_channel = Reader.t
   type out_channel = Writer.t
 
+  let sexp_of_in_channel _ = Sexplib0.Sexp.Atom "<opaque>"
+  let sexp_of_out_channel _ = Sexplib0.Sexp.Atom "<opaque>"
+
   let output_char w char = return (Writer.write_char w char)
   let output_string w s = return (Writer.write w s)
   let output_binary_int w n =
@@ -86,6 +89,12 @@ module Thread = struct
   module Sequencer = struct
     type 'a monad = 'a t
     type 'a t = 'a Sequencer.t
+
+    let sexp_of_t _ = Sexplib0.Sexp.Atom "<opaque>"
+    let t_of_sexp sexp =
+      Sexplib0.Sexp_conv.of_sexp_error
+        "opaque_of_sexp: cannot convert opaque values"
+        sexp
 
     let create t = Sequencer.create ~continue_on_error:true t
 

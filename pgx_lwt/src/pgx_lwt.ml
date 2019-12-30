@@ -15,6 +15,9 @@ module Thread = struct
   type in_channel = Lwt_io.input_channel
   type out_channel = Lwt_io.output_channel
 
+  let sexp_of_in_channel _ = Sexplib0.Sexp.Atom "<opaque>"
+  let sexp_of_out_channel _ = Sexplib0.Sexp.Atom "<opaque>"
+
   let output_char = Lwt_io.write_char
   let output_string = Lwt_io.write
   let output_binary_int w n =
@@ -66,6 +69,11 @@ module Thread = struct
   module Sequencer = struct
     type 'a monad = 'a t
     type 'a t = 'a * Lwt_mutex.t
+    let sexp_of_t _ = Sexplib0.Sexp.Atom "<opaque>"
+    let t_of_sexp sexp =
+      Sexplib0.Sexp_conv.of_sexp_error
+        "opaque_of_sexp: cannot convert opaque values"
+        sexp
 
     let create t =
       t, Lwt_mutex.create ()
