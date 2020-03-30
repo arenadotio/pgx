@@ -453,8 +453,8 @@ module Make (Thread : IO) = struct
   open Thread
 
   type conn =
-    { ichan: in_channel (* In_channel wrapping socket. *)
-    ; chan: out_channel (* Out_channel wrapping socket. *)
+    { ichan: (in_channel [@sexp.opaque]) (* In_channel wrapping socket. *)
+    ; chan: (out_channel [@sexp.opaque]) (* Out_channel wrapping socket. *)
     ; id: int (* unique id for this connection. *)
     ; mutable in_transaction: bool
     ; verbose : int

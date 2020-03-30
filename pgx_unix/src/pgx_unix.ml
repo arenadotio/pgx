@@ -32,9 +32,6 @@ module Simple_thread = struct
   type nonrec in_channel = in_channel
   type nonrec out_channel = out_channel
 
-  let sexp_of_in_channel _ = Sexplib0.Sexp.Atom "<opaque>"
-  let sexp_of_out_channel _ = Sexplib0.Sexp.Atom "<opaque>"
-
   let open_connection sockaddr =
     let std_socket =
       match sockaddr with
@@ -83,8 +80,6 @@ module Simple_thread = struct
   module Sequencer = struct
     type 'a monad = 'a t
     type 'a t = 'a
-
-    let sexp_of_t _ = Sexplib0.Sexp.Atom "<opaque>"
 
     let create t = t
 
