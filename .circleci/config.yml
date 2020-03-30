@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: ocaml/opam2:ubuntu-18.04-ocaml-4.06
+      - image: ocaml/opam2:4.09
         environment:
           PGUSER: pgx
           PGDATABASE: pgx-test
