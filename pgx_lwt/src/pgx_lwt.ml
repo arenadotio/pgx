@@ -70,10 +70,6 @@ module Thread = struct
     type 'a monad = 'a t
     type 'a t = 'a * Lwt_mutex.t
     let sexp_of_t _ = Sexplib0.Sexp.Atom "<opaque>"
-    let t_of_sexp sexp =
-      Sexplib0.Sexp_conv.of_sexp_error
-        "opaque_of_sexp: cannot convert opaque values"
-        sexp
 
     let create t =
       t, Lwt_mutex.create ()

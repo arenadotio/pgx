@@ -28,7 +28,6 @@ module type S = sig
     type 'a monad = 'a t
     type 'a t
     val sexp_of_t : 'a t -> Sexplib0.Sexp.t
-    val t_of_sexp : Sexplib0.Sexp.t -> 'a t
     val create : 'a -> 'a t
     val enqueue : 'a t -> ('a -> 'b monad) -> 'b monad
   end

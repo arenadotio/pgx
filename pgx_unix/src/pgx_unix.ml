@@ -85,10 +85,6 @@ module Simple_thread = struct
     type 'a t = 'a
 
     let sexp_of_t _ = Sexplib0.Sexp.Atom "<opaque>"
-    let t_of_sexp sexp =
-      Sexplib0.Sexp_conv.of_sexp_error
-        "opaque_of_sexp: cannot convert opaque values"
-        sexp
 
     let create t = t
 

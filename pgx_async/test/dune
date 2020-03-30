@@ -1,15 +1,3 @@
-(executables
+(tests
   (names test_pgx_async test_pgx_async_conversions)
   (libraries alcotest alcotest-async pgx_async pgx_test))
-
-(alias
-  (name runtest)
-  (package pgx_async)
-  (deps (:exe test_pgx_async.exe))
-  (action (run %{exe})))
-
-(alias
-  (name runtest)
-  (package pgx_async)
-  (deps (:exe test_pgx_async_conversions.exe))
-  (action (run %{exe})))
