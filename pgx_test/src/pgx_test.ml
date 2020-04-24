@@ -8,7 +8,9 @@ end
 module type ALCOTEST_IO = sig
   open Alcotest
   type 'a monad
+  type 'a test_case
   val test_case : string -> speed_level -> ('a -> unit monad) -> 'a test_case
+  val run : string -> (string * unit test_case list) list -> unit
 end
 
 module Alcotest_ext = struct
@@ -454,7 +456,7 @@ struct
         )
       ] in
   if force_tests || have_pg_config then
-    Alcotest.run "pgx_test" ["pgx_async", tests]
+    Alcotest_io.run "pgx_test" ["pgx_async", tests]
   else begin
     print_endline "Skipping PostgreSQL tests since PGUSER is unset."
   end

@@ -16,7 +16,7 @@ depends: [
   "pgx"
   "lwt"
 
-  "alcotest" {with-test}
-  "alcotest-lwt" {with-test}
+  "alcotest" {with-test & >= "1.0.0"}
+  "alcotest-lwt" {with-test & >= "1.0.0"}
   "base64" {with-test}
 ]
