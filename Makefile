@@ -8,8 +8,7 @@ clean:
 
 coverage: clean
 	@BISECT_ENABLE=YES dune runtest
-	@bisect-ppx-report coveralls coverage.json
-	@curl -L -F json_file=@./coverage.json https://coveralls.io/api/v1/jobs
+	@bisect-ppx-report --send-to Coveralls
 
 test:
 	@dune runtest --force
