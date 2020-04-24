@@ -6,7 +6,9 @@ end
 module type ALCOTEST_IO = sig
   open Alcotest
   type 'a monad
+  type 'a test_case
   val test_case : string -> speed_level -> ('a -> unit monad) -> 'a test_case
+  val run : string -> (string * unit test_case list) list -> unit
 end
 
 module Make_tests :
