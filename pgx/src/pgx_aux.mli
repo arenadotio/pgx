@@ -7,7 +7,7 @@ module String : sig
   val join : string -> string list -> string
   val implode : char list -> string
   val fold_left : ('a -> char -> 'a) -> 'a -> string -> 'a
-  val init: int -> (int -> char) -> string
+  val init : int -> (int -> char) -> string
 end
 
 module Option : sig
@@ -15,7 +15,6 @@ module Option : sig
   val map : ('a -> 'b) -> 'a option -> 'b option
   val bind : ('a -> 'b option) -> 'a option -> 'b option
 end
-
 
 module List : sig
   include module type of List
@@ -28,4 +27,5 @@ end
 
 (** Necessary for ppx_assert *)
 val compare_string : string -> string -> int
+
 val compare_bool : bool -> bool -> int

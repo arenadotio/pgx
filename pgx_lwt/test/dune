@@ -1,9 +1,11 @@
 (executable
-  (name test_pgx_lwt)
-  (libraries alcotest alcotest-lwt pgx_test pgx_lwt))
+ (name test_pgx_lwt)
+ (libraries alcotest alcotest-lwt pgx_test pgx_lwt))
 
 (alias
-  (name runtest)
-  (package pgx_lwt)
-  (deps (:exe test_pgx_lwt.exe))
-  (action (run %{exe})))
+ (name runtest)
+ (package pgx_lwt)
+ (deps
+  (:exe test_pgx_lwt.exe))
+ (action
+  (run %{exe})))

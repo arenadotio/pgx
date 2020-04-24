@@ -1,4 +1,5 @@
 (library
-  (public_name pgx_unix)
-  (libraries pgx)
-  (preprocess (pps bisect_ppx --conditional)))
+ (public_name pgx_unix)
+ (libraries pgx)
+ (preprocess
+  (pps bisect_ppx --conditional)))

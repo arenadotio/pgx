@@ -1,0 +1,6 @@
+---
+repos:
+  - repo: https://github.com/arenadotio/pre-commit-ocamlformat
+    rev: 2b9c80c268df08bbe192ae58e5e8db2ba8496767
+    hooks:
+      - id: ocamlformat
