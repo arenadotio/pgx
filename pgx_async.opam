@@ -12,13 +12,14 @@ build: [
 ]
 
 depends: [
-  "async" {>= "v0.10.0"}
-  "ocaml" {>= "4.05.0"}
+  "ocaml" { >= "4.08.0" }
+  "dune" {>= "1.1.0"}
+  "async" {>= "v0.13.0"}
   "pgx"
   "ppx_jane"
-  "bisect_ppx" {dev & > "2.0.0"}
+  "bisect_ppx" {dev & >= "2.0.0"}
 
   "alcotest" {with-test & >= "1.0.0"}
   "alcotest-async" {with-test & >= "1.0.0"}
-  "base64" {with-test}
+  "base64" {with-test & >= "3.0.0"}
 ]

@@ -14,4 +14,4 @@ coverage: clean
 test:
 	@dune runtest --force
 
-.PHONY: all build clean coverage opam-pkg test
+.PHONY: all build clean coverage test

@@ -25,7 +25,6 @@ module type S = sig
   module Sequencer : sig
     type 'a monad = 'a t
     type 'a t
-
     val create : 'a -> 'a t
     val enqueue : 'a t -> ('a -> 'b monad) -> 'b monad
   end
