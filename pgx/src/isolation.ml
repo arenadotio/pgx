@@ -10,3 +10,4 @@ let to_string = function
   | Repeatable_read -> "repeatable read"
   | Read_committed -> "read committed"
   | Read_uncommitted -> "read uncommitted"
+;;

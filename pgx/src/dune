@@ -1,5 +1,6 @@
 (library
-  (public_name pgx)
-  (wrapped false)
-  (libraries ipaddr uuidm re sexplib0)
-  (preprocess (pps ppx_custom_printf ppx_sexp_conv bisect_ppx --conditional)))
+ (public_name pgx)
+ (wrapped false)
+ (libraries ipaddr uuidm re sexplib0)
+ (preprocess
+  (pps ppx_custom_printf ppx_sexp_conv bisect_ppx --conditional)))

@@ -1,15 +1,19 @@
 (executables
-  (names test_error_response test_pgx_value)
-  (libraries alcotest ipaddr pgx))
+ (names test_error_response test_pgx_value)
+ (libraries alcotest ipaddr pgx))
 
 (alias
-  (name runtest)
-  (package pgx)
-  (deps (:exe test_error_response.exe))
-  (action (run %{exe})))
+ (name runtest)
+ (package pgx)
+ (deps
+  (:exe test_error_response.exe))
+ (action
+  (run %{exe})))
 
 (alias
-  (name runtest)
-  (package pgx)
-  (deps (:exe test_pgx_value.exe))
-  (action (run %{exe})))
+ (name runtest)
+ (package pgx)
+ (deps
+  (:exe test_pgx_value.exe))
+ (action
+  (run %{exe})))

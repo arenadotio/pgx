@@ -1,8 +1,9 @@
 (executables
-  (names pgx_async_example)
-  (libraries core async pgx_async)
-  (preprocess (pps ppx_jane)))
+ (names pgx_async_example)
+ (libraries core async pgx_async)
+ (preprocess
+  (pps ppx_jane)))
 
 (alias
-  (name examples)
-  (deps pgx_async_example.exe))
+ (name examples)
+ (deps pgx_async_example.exe))
