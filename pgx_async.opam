@@ -13,7 +13,7 @@ build: [
 
 depends: [
   "async" {>= "v0.13.0"}
-  "pgx"
+  "pgx" {= version}
   "ppx_jane"
 
   "alcotest-async" {with-test & >= "1.0.0"}
