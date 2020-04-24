@@ -19,7 +19,7 @@ depends: [
   "re"
   "sexplib0" {>= "v0.11.0"}
 
-  "bisect_ppx" {build & >= "1.4.1"}
+  "bisect_ppx" {build & >= "2.0.0"}
   "dune" {build & >= "1.1.0"}
 
   "alcotest" {with-test}
