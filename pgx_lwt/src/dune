@@ -1,6 +1,16 @@
+(* -*- tuareg -*- *)
+
+let preprocess =
+  match Sys.getenv "BISECT_ENABLE" with
+  | "yes" -> "(preprocess (pps bisect_ppx))"
+  | _ -> ""
+  | exception Not_found -> ""
+
+let () = Jbuild_plugin.V1.send @@ {|
+
 (library
  (public_name pgx_lwt)
  (wrapped false)
  (libraries lwt lwt.unix pgx)
- (preprocess
-  (pps bisect_ppx --conditional)))
+ |} ^ preprocess ^ {|)
+|}
