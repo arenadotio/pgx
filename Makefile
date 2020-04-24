@@ -7,7 +7,7 @@ clean:
 	@dune clean
 
 coverage: clean
-	@BISECT_ENABLE=YES dune runtest
+	@BISECT_ENABLE=yes dune runtest
 	@bisect-ppx-report send-to Coveralls
 
 test:
