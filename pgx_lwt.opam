@@ -12,7 +12,7 @@ build: [
 ]
 
 depends: [
-  "pgx"
+  "pgx" {= version}
   "lwt"
 
   "alcotest-lwt" {with-test & >= "1.0.0"}

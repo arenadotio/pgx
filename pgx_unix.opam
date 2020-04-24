@@ -12,5 +12,5 @@ build: [
 ]
 
 depends: [
-  "pgx"
+  "pgx" {= version}
 ]
