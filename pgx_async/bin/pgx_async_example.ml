@@ -109,7 +109,8 @@ let main () =
   @@ fun db ->
   setup db
   >>= fun () ->
-  let%bind steve_id = Employee.insert ~name:"Steve" db in
+  Employee.insert ~name:"Steve" db
+  >>= fun steve_id ->
   (* Parallel queries are not an error, but will execute in serial *)
   [ Facility.insert ~name:"Headquarters" ~director_id:steve_id db
   ; Facility.insert ~name:"New Office" db

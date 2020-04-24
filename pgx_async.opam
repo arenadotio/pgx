@@ -14,7 +14,6 @@ build: [
 depends: [
   "async" {>= "v0.13.0"}
   "pgx" {= version}
-  "ppx_jane"
 
   "alcotest-async" {with-test & >= "1.0.0"}
   "base64" {with-test & >= "3.0.0"}
