@@ -760,7 +760,7 @@ module Make (Thread : IO) = struct
 
   module Prepared = struct
     type s =
-      { conn : conn Sequencer.t
+      { conn : (conn Sequencer.t [@sexp.opaque])
       ; name : string }
 
     let sexp_of_s { name; _ } =
