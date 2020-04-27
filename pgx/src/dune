@@ -1,6 +1,16 @@
+(* -*- tuareg -*- *)
+
+let preprocess =
+  match Sys.getenv "BISECT_ENABLE" with
+  | "yes" -> "bisect_ppx"
+  | _ -> ""
+  | exception Not_found -> ""
+
+let () = Jbuild_plugin.V1.send @@ {|
+
 (library
  (public_name pgx)
  (wrapped false)
  (libraries ipaddr uuidm re sexplib0)
- (preprocess
-  (pps ppx_custom_printf ppx_sexp_conv bisect_ppx --conditional)))
+ (preprocess (pps ppx_custom_printf ppx_sexp_conv |} ^ preprocess ^ {|)))
+|}
