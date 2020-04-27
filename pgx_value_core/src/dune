@@ -9,8 +9,7 @@ let preprocess =
 let () = Jbuild_plugin.V1.send @@ {|
 
 (library
- (public_name pgx_async)
- (wrapped false)
- (libraries async pgx_value_core)
+ (public_name pgx_value_core)
+ (libraries core_kernel pgx)
  |} ^ preprocess ^ {|)
 |}

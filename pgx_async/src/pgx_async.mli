@@ -1,7 +1,6 @@
 (** Async based Postgres client based on Pgx. *)
-open Core
-
 open Async
+
 include Pgx.S with type 'a monad = 'a Deferred.t
 
 (* for testing purposes *)
@@ -24,13 +23,5 @@ val with_conn
     as much overhead. *)
 val execute_pipe : ?params:Pgx.row -> t -> string -> Pgx.row Pipe.Reader.t
 
-module Value : sig
-  include Pgx_value_intf.S
-
-  val of_date : Date.t -> t
-  val to_date_exn : t -> Date.t
-  val to_date : t -> Date.t option
-  val of_time : Time.t -> t
-  val to_time_exn : t -> Time.t
-  val to_time : t -> Time.t option
-end
+(** Exposed for backwards compatiblity. New code should use [Pgx_value_core] directly. *)
+module Value = Pgx_value_core
