@@ -1,5 +1,6 @@
-open Core
-open Async
+open Core_kernel
+open Async_kernel
+open Async_unix
 
 (* Pgx allows to generate bindings from any module implementing their
    THREAD signature which encompasses monadic concurrency + IO. The

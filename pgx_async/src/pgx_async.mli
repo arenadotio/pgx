@@ -1,5 +1,5 @@
 (** Async based Postgres client based on Pgx. *)
-open Async
+open Async_kernel
 
 include Pgx.S with type 'a monad = 'a Deferred.t
 

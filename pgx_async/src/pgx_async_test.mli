@@ -1,6 +1,6 @@
 (** Testing library for code that uses postgres *)
 
-open Async
+open Async_kernel
 
 val set_to_default_db : unit -> unit
 
