@@ -1,6 +1,7 @@
 (* A basic example of Pgx_async usage *)
-open Core
-open Async
+open Core_kernel
+open Async_kernel
+open Async_unix
 
 module Employee = struct
   let create db =
@@ -137,7 +138,4 @@ let main () =
   | _ -> assert false
 ;;
 
-let () =
-  let summary = "Pgx_async example" in
-  Command.async ~summary (Command.Param.return main) |> Command.run
-;;
+let () = Thread_safe.block_on_async_exn main

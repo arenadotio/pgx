@@ -1,5 +1,6 @@
-open Core
-open Async
+open Core_kernel
+open Async_kernel
+open Async_unix
 module Pga = Pgx_async
 
 let default_database = "postgres"
