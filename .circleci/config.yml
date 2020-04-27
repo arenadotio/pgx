@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 jobs:
   build:
     docker:
@@ -25,7 +25,7 @@ jobs:
           name: Pin packages
           command: |
             for p in *.opam; do
-              opam pin add -y -n ${p%.opam} .
+              opam pin add -k git -y -n ${p%.opam} .
             done
       - run:
           name: Install system dependencies
@@ -44,3 +44,45 @@ jobs:
           name: Test and coverage report
           command: |
             opam config exec -- make coverage
+
+  # This build step ensures we can build a mirage unikernel but doesn't make any attempt to run it
+  # We're basically just trying to ensure our build deps are ok
+  build_mirage:
+    docker:
+      - image: ocaml/opam2:4.09
+        environment:
+          TERM: xterm
+    steps:
+      - checkout
+      - run:
+          name: Update opam
+          command: |
+            opam remote remove default --all
+            opam remote add default https://opam.ocaml.org
+      - run:
+          name: Pin packages
+          command: opam pin add -k git -y -n pgx .
+      - run:
+          name: Install system dependencies
+          command: opam depext -y pgx
+      - run:
+          name: Install OCaml dependencies
+          command: opam install --deps-only -y pgx
+      - run:
+          name: Install mirage
+          command: opam install -y mirage
+      - run:
+          name: Configure mirage
+          command: cd mirage && opam exec -- mirage configure -t spt
+      - run:
+          name: Install mirage deps
+          command: cd mirage && opam exec -- make depend
+      - run:
+          name: Build mirage
+          command: cd mirage && opam exec -- make
+
+workflows:
+  main:
+    jobs:
+      - build
+      - build_mirage
