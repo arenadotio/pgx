@@ -25,7 +25,7 @@ jobs:
           name: Pin packages
           command: |
             for p in *.opam; do
-              opam pin add -y -n ${p%.opam} .
+              opam pin add -y -n ${p%.opam}.~dev .
             done
       - run:
           name: Install system dependencies
