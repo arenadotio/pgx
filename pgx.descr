@@ -1,3 +1,0 @@
-Pure-OCaml PostgreSQL client library
-
-PGX is a pure-OCaml PostgreSQL client library, supporting Async, LWT, or synchronous operations.
