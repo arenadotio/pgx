@@ -707,9 +707,9 @@ module Make (Thread : IO) = struct
          *)
         fail_msg "Pgx: crypt password authentication not supported"
       | Message_in.AuthenticationMD5Password salt ->
-        (*    (* This is a guess at how the salt is used ... *)
-              let password = salt ^ password in
-              let password = Digest.string password in*)
+        (* (* This is a guess at how the salt is used ... *)
+           let password = salt ^ password in
+           let password = Digest.string password in*)
         let digest =
           password ^ user
           |> Digest.string

@@ -411,7 +411,7 @@ struct
             with_conn (fun db ->
                 [ "SELECT decode($1, 'base64')", Base64.encode_exn all_chars, all_chars
                   (* Postgres adds whitespace to base64 encodings, so we strip it
-               back out *)
+                     back out *)
                 ; ( "SELECT regexp_replace(encode($1, 'base64'), '\\s', '', 'g')"
                   , all_chars
                   , Base64.encode_exn all_chars )
