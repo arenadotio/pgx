@@ -103,6 +103,8 @@
   (ocaml
    (>= 4.08))
   (pgx
+   (= :version))
+  (pgx_lwt
    (= :version))))
 
 (package
