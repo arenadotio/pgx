@@ -471,7 +471,8 @@ module type IO = Io_intf.S
 module type S = Pgx_intf.S
 
 module Make (Thread : IO) = struct
-  open Thread
+  module IO = Thread
+  open IO
 
   type conn =
     { ichan : (in_channel[@sexp.opaque] (* In_channel wrapping socket. *))
@@ -485,7 +486,6 @@ module Make (Thread : IO) = struct
   [@@deriving sexp_of]
 
   type t = conn Sequencer.t
-  type 'a monad = 'a Thread.t
 
   let ( >>| ) x f = x >>= fun x -> return (f x)
 

@@ -49,4 +49,4 @@ module Value = Pgx_value
 
 module type S = Pgx_intf.S
 
-module Make (Thread : IO) : S with type 'a monad = 'a Thread.t
+module Make (Thread : IO) : S with type 'a IO.t = 'a Thread.t

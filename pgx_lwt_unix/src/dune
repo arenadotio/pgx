@@ -1,0 +1,3 @@
+(library
+ (public_name pgx_lwt_unix)
+ (libraries pgx pgx_lwt lwt.unix))

@@ -10,7 +10,6 @@ let () = Jbuild_plugin.V1.send @@ {|
 
 (library
  (public_name pgx_lwt)
- (wrapped false)
- (libraries lwt lwt.unix pgx)
+ (libraries lwt logs.lwt pgx)
  |} ^ preprocess ^ {|)
 |}

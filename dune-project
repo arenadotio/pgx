@@ -85,6 +85,21 @@
     :with-test
     (>= "1.0.0")))
   lwt
+  logs
+  (ocaml
+   (>= 4.08))
+  (pgx
+   (= :version))))
+
+(package
+ (name pgx_lwt_unix)
+ (synopsis "Pgx using Lwt for IO")
+ (depends
+  (alcotest-lwt
+   (and
+    :with-test
+    (>= "1.0.0")))
+  lwt
   (ocaml
    (>= 4.08))
   (pgx

@@ -1,8 +1,6 @@
 external reraise : exn -> _ = "%reraise"
 
 module type S = sig
-  type 'a monad
-
   val run_tests : unit -> unit
 end
 
@@ -23,13 +21,12 @@ end
 let check_result = Alcotest.(check (list (list (option string))))
 let check_results = Alcotest.(check (list (list (list (option string)))))
 
-module Make_tests (IO : Pgx.IO) (Alcotest_io : ALCOTEST_IO with type 'a monad := 'a IO.t) =
+module Make_tests
+    (Pgx_impl : Pgx.S)
+    (Alcotest_io : ALCOTEST_IO with type 'a monad := 'a Pgx_impl.IO.t) =
 struct
-  module Pgx_impl = Pgx.Make (IO)
-  open IO
+  open Pgx_impl.IO
   open Pgx_impl
-
-  type 'a monad = 'a IO.t
 
   let default_database = "postgres"
 
