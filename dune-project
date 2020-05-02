@@ -115,3 +115,15 @@
    (>= 4.08))
   (pgx
    (= :version))))
+
+(package
+ (name pgx_lwt_mirage)
+ (synopsis "Pgx using Lwt for IO")
+ (depends
+  lwt
+  (ocaml
+   (>= 4.08))
+  (pgx
+   (= :version))
+  (pgx_lwt
+   (= :version))))
