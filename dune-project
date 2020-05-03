@@ -125,6 +125,13 @@
   lwt
   (ocaml
    (>= 4.08))
+  logs
+  mirage-channel
+  conduit-mirage
+  dns-client
+  mirage-random
+  mirage-clock
+  mirage-stack
   (pgx
    (= :version))
   (pgx_lwt
