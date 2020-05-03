@@ -16,6 +16,6 @@ module type IO = sig
   val open_connection : sockaddr -> (in_channel * out_channel) Lwt.t
 end
 
-module type Pgx_lwt = sig
+module type Pgx_impl = sig
   include Pgx.S with type 'a IO.t = 'a Lwt.t
 end

@@ -24,5 +24,5 @@ module Make : functor
   (CLOCK : Mirage_clock.MCLOCK)
   (STACK : Mirage_stack.V4)
   -> sig
-  val create : STACK.t -> (module Pgx_lwt.S.Pgx_lwt)
+  val create : STACK.t -> (module Pgx_lwt.S.Pgx_impl)
 end

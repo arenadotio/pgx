@@ -119,6 +119,6 @@ struct
       end
 
       include Pgx_lwt.Make (T)
-    end : Pgx_lwt.S.Pgx_lwt)
+    end : Pgx_lwt.S.Pgx_impl)
   ;;
 end
