@@ -11,6 +11,11 @@ let packages =
 
 let stack = generic_stackv4 default_network
 
+let database =
+  let doc = Key.Arg.info ~doc:"database to use" [ "db"; "pgdatabase" ] in
+  Key.(create "pgdatabase" Arg.(opt string "postgres" doc))
+;;
+
 let port =
   let doc = Key.Arg.info ~doc:"port to use for postgresql" [ "p"; "pgport" ] in
   Key.(create "pgport" Arg.(opt int 5432 doc))
@@ -39,6 +44,7 @@ let server =
       ; Key.abstract hostname
       ; Key.abstract user
       ; Key.abstract password
+      ; Key.abstract database
       ]
     ~packages
     (random @-> pclock @-> mclock @-> stackv4 @-> job)

@@ -1,4 +1,5 @@
 open Lwt.Syntax
+open Lwt.Infix
 
 module Make
     (RANDOM : Mirage_random.S)
@@ -14,9 +15,30 @@ struct
     ; email : string
     }
 
+  let emails = [ "foo@test.com"; "bar@foo.com"; "hello@test.net" ]
+
+  let setup_database ~port ~user ~host ~password ~database pgx () =
+    Logs.info (fun m -> m "setting up database");
+    let module P = (val pgx : Pgx_lwt.S.Pgx_impl) in
+    P.with_conn ~user ~host ~password ~port ~database (fun conn ->
+        P.execute_unit
+          conn
+          "CREATE TABLE IF NOT EXISTS users( id SERIAL PRIMARY KEY, email VARCHAR(40) \
+           NOT NULL UNIQUE );"
+        >>= fun () ->
+        let params = List.map (fun email -> Pgx.Value.[ of_string email ]) emails in
+        P.execute_many
+          conn
+          ~params
+          ~query:"INSERT INTO USERS (email) VALUES ($1) ON CONFLICT (email) DO NOTHING"
+        >>= fun rows ->
+        Logs.info (fun m -> m "Inserted %d rows" (List.length rows));
+        Lwt.return_unit)
+  ;;
+
   let get_users ~port ~user ~host ~password ~database pgx () =
     Logs.info (fun m -> m "Fetching users");
-    let module P = (val pgx : Pgx_lwt.S.Pgx_lwt) in
+    let module P = (val pgx : Pgx_lwt.S.Pgx_impl) in
     P.with_conn ~user ~host ~password ~port ~database (fun conn ->
         let+ rows = P.execute conn "SELECT * FROM USERS" in
         List.map
@@ -43,14 +65,9 @@ struct
     let host = Key_gen.pghost () in
     let user = Key_gen.pguser () in
     let password = Key_gen.pgpassword () in
-    print_users
-      (get_users
-         ~port
-         ~host
-         ~user
-         ~password
-         ~database:"playground"
-         (Pgx_mirage.create stack)
-         ())
+    let database = Key_gen.pgdatabase () in
+    let pgx = Pgx_mirage.create stack in
+    setup_database ~port ~host ~user ~password ~database pgx ()
+    >>= fun () -> print_users (get_users ~port ~host ~user ~password ~database pgx ())
   ;;
 end
