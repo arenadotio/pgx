@@ -66,7 +66,7 @@ struct
     let user = Key_gen.pguser () in
     let password = Key_gen.pgpassword () in
     let database = Key_gen.pgdatabase () in
-    let pgx = Pgx_mirage.create stack in
+    let pgx = Pgx_mirage.connect stack in
     setup_database ~port ~host ~user ~password ~database pgx ()
     >>= fun () -> print_users (get_users ~port ~host ~user ~password ~database pgx ())
   ;;

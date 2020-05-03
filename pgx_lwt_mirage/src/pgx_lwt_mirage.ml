@@ -109,7 +109,7 @@ struct
     ch, ch
   ;;
 
-  let create stack =
+  let connect stack =
     let open_connection = connect_stack stack in
     (module struct
       module T = struct
