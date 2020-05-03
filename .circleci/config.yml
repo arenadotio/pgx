@@ -25,7 +25,7 @@ jobs:
           name: Pin packages
           command: |
             for p in *.opam; do
-              opam pin add -k git -y -n ${p%.opam} .
+              opam pin add -k path -y -n ${p%.opam}.dev .
             done
       - run:
           name: Install system dependencies
@@ -59,17 +59,18 @@ jobs:
             opam remote add default https://opam.ocaml.org
       - run:
           name: Pin packages
-          command: opam pin add -k git -y -n pgx .
           command: |
-            opam pin add -k git -y -n pgx .
-            opam pin add -k git -y -n pgx_lwt .
-            opam pin add -k git -y -n pgx_lwt_mirage .
+            opam pin add -k git -y -n pgx.dev .
+            opam pin add -k git -y -n pgx_lwt.dev .
+            opam pin add -k git -y -n pgx_lwt_mirage.dev .
       - run:
           name: Install system dependencies
           command: opam depext -y pgx pgx_lwt pgx_lwt_mirage
       - run:
           name: Install OCaml dependencies
-          command: opam install --deps-only -y pgx pgx_lwt pgx_lwt_mirage
+          command: |
+            opam install --deps-only -y pgx pgx_lwt pgx_lwt_mirage
+            opam install mirage
       - run:
           name: Configure mirage
           command: cd unikernel && opam exec -- mirage configure -t spt
