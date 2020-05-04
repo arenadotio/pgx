@@ -8,11 +8,17 @@ homepage: "https://github.com/arenadotio/pgx"
 bug-reports: "https://github.com/arenadotio/pgx/issues"
 depends: [
   "dune" {>= "1.11"}
-  "alcotest-lwt" {with-test & >= "1.0.0"}
   "lwt"
-  "logs"
   "ocaml" {>= "4.08"}
+  "logs"
+  "mirage-channel"
+  "conduit-mirage"
+  "dns-client"
+  "mirage-random"
+  "mirage-clock"
+  "mirage-stack"
   "pgx" {= version}
+  "pgx_lwt" {= version}
 ]
 build: [
   ["dune" "subst"] {pinned}

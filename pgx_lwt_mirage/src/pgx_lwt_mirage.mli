@@ -1,12 +1,10 @@
-(* PG'OCaml is a set of OCaml bindings for the PostgreSQL database.
- *
- * PG'OCaml - type safe interface to PostgreSQL.
- * Copyright (C) 2005-2009 Richard Jones and other authors.
+(* Copyright (C) 2020 Petter A. Urkedal
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
+ * version 2 of the License, or (at your option) any later version,
+ * with the OCaml static compilation exception.
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,7 +17,9 @@
  * Boston, MA 02111-1307, USA.
  *)
 
-include Pgx.S with type 'a Io.t = 'a
-
-(* for testing purposes *)
-module Simple_thread : Pgx.Io with type 'a t = 'a
+module Make
+    (RANDOM : Mirage_random.S)
+    (CLOCK : Mirage_clock.MCLOCK)
+    (STACK : Mirage_stack.V4) : sig
+  val connect : STACK.t -> (module Pgx_lwt.S)
+end

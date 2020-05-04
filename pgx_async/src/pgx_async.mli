@@ -1,10 +1,10 @@
 (** Async based Postgres client based on Pgx. *)
 open Async_kernel
 
-include Pgx.S with type 'a monad = 'a Deferred.t
+include Pgx.S with type 'a Io.t = 'a Deferred.t
 
 (* for testing purposes *)
-module Thread : Pgx.IO with type 'a t = 'a Deferred.t
+module Thread : Pgx.Io with type 'a t = 'a Deferred.t
 
 val with_conn
   :  ?host:string

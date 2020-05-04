@@ -5,6 +5,6 @@ module Alcotest_io = struct
   let run name tests = Alcotest.run name tests
 end
 
-include Pgx_test.Make_tests (Pgx_unix.Simple_thread) (Alcotest_io)
+include Pgx_test.Make_tests (Pgx_unix) (Alcotest_io)
 
 let () = run_tests ()

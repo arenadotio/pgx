@@ -1,6 +1,5 @@
-(** Lwt based Postgres client based on Pgx. *)
+module Io_intf = Io_intf
 
-include Pgx.S with type 'a monad = 'a Lwt.t
+module type S = Pgx.S with type 'a Io.t = 'a Lwt.t
 
-(* for testing purposes *)
-module Thread : Pgx.IO with type 'a t = 'a Lwt.t
+module Make (Io : Io_intf.S) : S

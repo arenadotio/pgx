@@ -85,9 +85,26 @@
     :with-test
     (>= "1.0.0")))
   lwt
+  logs
   (ocaml
    (>= 4.08))
   (pgx
+   (= :version))))
+
+(package
+ (name pgx_lwt_unix)
+ (synopsis "Pgx using Lwt for IO")
+ (depends
+  (alcotest-lwt
+   (and
+    :with-test
+    (>= "1.0.0")))
+  lwt
+  (ocaml
+   (>= 4.08))
+  (pgx
+   (= :version))
+  (pgx_lwt
    (= :version))))
 
 (package
@@ -99,4 +116,23 @@
   (ocaml
    (>= 4.08))
   (pgx
+   (= :version))))
+
+(package
+ (name pgx_lwt_mirage)
+ (synopsis "Pgx using Lwt for IO")
+ (depends
+  lwt
+  (ocaml
+   (>= 4.08))
+  logs
+  mirage-channel
+  conduit-mirage
+  dns-client
+  mirage-random
+  mirage-clock
+  mirage-stack
+  (pgx
+   (= :version))
+  (pgx_lwt
    (= :version))))

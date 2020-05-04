@@ -10,9 +10,9 @@ depends: [
   "dune" {>= "1.11"}
   "alcotest-lwt" {with-test & >= "1.0.0"}
   "lwt"
-  "logs"
   "ocaml" {>= "4.08"}
   "pgx" {= version}
+  "pgx_lwt" {= version}
 ]
 build: [
   ["dune" "subst"] {pinned}

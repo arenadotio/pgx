@@ -1,75 +1,67 @@
-open Lwt
+module Io_intf = Io_intf
+
+module type S = Pgx.S with type 'a Io.t = 'a Lwt.t
 
 module Thread = struct
-  type 'a t = 'a Lwt.t
+  open Lwt
 
-  let return = return
-  let ( >>= ) = ( >>= )
-  let catch = catch
+  module Make (Io : Io_intf.S) = struct
+    type 'a t = 'a Lwt.t
 
-  type sockaddr =
-    | Unix of string
-    | Inet of string * int
+    let return = return
+    let ( >>= ) = ( >>= )
+    let catch = catch
 
-  type in_channel = Lwt_io.input_channel
-  type out_channel = Lwt_io.output_channel
+    type sockaddr = Io.sockaddr =
+      | Unix of string
+      | Inet of string * int
 
-  let output_char = Lwt_io.write_char
-  let output_string = Lwt_io.write
+    type in_channel = Io.in_channel
+    type out_channel = Io.out_channel
 
-  let output_binary_int w n =
-    let chr = Char.chr in
-    output_char w (chr (n lsr 24))
-    >>= fun () ->
-    output_char w (chr ((n lsr 16) land 255))
-    >>= fun () ->
-    output_char w (chr ((n lsr 8) land 255))
-    >>= fun () -> output_char w (chr (n land 255))
-  ;;
+    let output_char = Io.output_char
+    let output_string = Io.output_string
 
-  let flush = Lwt_io.flush
-  let input_char = Lwt_io.read_char
-  let really_input = Lwt_io.read_into_exactly
+    let output_binary_int w n =
+      let chr = Char.chr in
+      output_char w (chr (n lsr 24))
+      >>= fun () ->
+      output_char w (chr ((n lsr 16) land 255))
+      >>= fun () ->
+      output_char w (chr ((n lsr 8) land 255))
+      >>= fun () -> output_char w (chr (n land 255))
+    ;;
 
-  let input_binary_int r =
-    let b = Bytes.create 4 in
-    Lwt_io.read_into_exactly r b 0 4
-    >|= fun () ->
-    let s = Bytes.to_string b in
-    let code = Char.code in
-    (code s.[0] lsl 24) lor (code s.[1] lsl 16) lor (code s.[2] lsl 8) lor code s.[3]
-  ;;
+    let flush = Io.flush
+    let input_char = Io.input_char
+    let really_input = Io.really_input
 
-  let close_in = Lwt_io.close
+    let input_binary_int r =
+      let b = Bytes.create 4 in
+      really_input r b 0 4
+      >|= fun () ->
+      let s = Bytes.to_string b in
+      let code = Char.code in
+      (code s.[0] lsl 24) lor (code s.[1] lsl 16) lor (code s.[2] lsl 8) lor code s.[3]
+    ;;
 
-  let open_connection sockaddr =
-    (match sockaddr with
-    | Unix path -> return (Unix.ADDR_UNIX path)
-    | Inet (hostname, port) ->
-      Lwt_unix.gethostbyname hostname
-      >|= fun { Lwt_unix.h_addr_list; _ } ->
-      let len = Array.length h_addr_list in
-      let i = Random.int len in
-      let addr = h_addr_list.(i) in
-      Unix.ADDR_INET (addr, port))
-    >>= Lwt_io.open_connection
-  ;;
+    let close_in = Io.close_in
+    let open_connection = Io.open_connection
+    let getlogin = Io.getlogin
+    let debug s = Logs_lwt.debug (fun m -> m "%s" s)
+    let protect f ~finally = Lwt.finalize f finally
 
-  (* The unix getlogin syscall can fail *)
-  let getlogin () =
-    Unix.getuid () |> Lwt_unix.getpwuid >|= fun { Lwt_unix.pw_name; _ } -> pw_name
-  ;;
+    module Sequencer = struct
+      type 'a monad = 'a t
+      type 'a t = 'a * Lwt_mutex.t
 
-  let debug = Lwt_io.eprintl
-  let protect f ~finally = Lwt.finalize f finally
-
-  module Sequencer = struct
-    type 'a monad = 'a t
-    type 'a t = 'a * Lwt_mutex.t
-
-    let create t = t, Lwt_mutex.create ()
-    let enqueue (t, mutex) f = Lwt_mutex.with_lock mutex (fun () -> f t)
+      let create t = t, Lwt_mutex.create ()
+      let enqueue (t, mutex) f = Lwt_mutex.with_lock mutex (fun () -> f t)
+    end
   end
 end
 
-include Pgx.Make (Thread)
+module Make (Io : Io_intf.S) = struct
+  module Thread = Thread.Make (Io)
+  include Pgx.Make (Thread)
+end

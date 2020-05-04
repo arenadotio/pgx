@@ -8,6 +8,6 @@ module Alcotest_io = struct
   ;;
 end
 
-include Pgx_test.Make_tests (Pgx_async.Thread) (Alcotest_io)
+include Pgx_test.Make_tests (Pgx_async) (Alcotest_io)
 
 let () = run_tests ()

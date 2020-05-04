@@ -9,7 +9,7 @@ let preprocess =
 let () = Jbuild_plugin.V1.send @@ {|
 
 (library
- (public_name pgx_lwt)
- (libraries lwt logs.lwt pgx)
+ (public_name pgx_lwt_mirage)
+ (libraries pgx_lwt lwt logs.lwt pgx mirage-channel conduit-mirage dns-client mirage-random mirage-clock mirage-stack)
  |} ^ preprocess ^ {|)
 |}

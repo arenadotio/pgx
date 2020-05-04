@@ -1,6 +1,4 @@
 module type S = sig
-  type 'a monad
-
   val run_tests : unit -> unit
 end
 
@@ -14,5 +12,6 @@ module type ALCOTEST_IO = sig
   val run : string -> (string * unit test_case list) list -> unit
 end
 
-module Make_tests (IO : Pgx.IO) (Alcotest_io : ALCOTEST_IO with type 'a monad := 'a IO.t) :
-  S with type 'a monad = 'a IO.t
+module Make_tests
+    (Pgx_impl : Pgx.S)
+    (Alcotest_io : ALCOTEST_IO with type 'a monad := 'a Pgx_impl.Io.t) : S
