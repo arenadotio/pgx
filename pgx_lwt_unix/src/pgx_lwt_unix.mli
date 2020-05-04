@@ -1,1 +1,1 @@
-include Pgx_lwt.S.Pgx_impl
+include Pgx_lwt.S

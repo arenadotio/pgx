@@ -19,10 +19,9 @@
  * Boston, MA 02111-1307, USA.
  *)
 
-module Make : functor
-  (RANDOM : Mirage_random.S)
-  (CLOCK : Mirage_clock.MCLOCK)
-  (STACK : Mirage_stack.V4)
-  -> sig
-  val connect : STACK.t -> (module Pgx_lwt.S.Pgx_impl)
+module Make
+    (RANDOM : Mirage_random.S)
+    (CLOCK : Mirage_clock.MCLOCK)
+    (STACK : Mirage_stack.V4) : sig
+  val connect : STACK.t -> (module Pgx_lwt.S)
 end

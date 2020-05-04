@@ -1,4 +1,4 @@
-module type IO = sig
+module type S = sig
   type in_channel
   type out_channel
 
@@ -14,8 +14,4 @@ module type IO = sig
   val close_in : in_channel -> unit Lwt.t
   val getlogin : unit -> string Lwt.t
   val open_connection : sockaddr -> (in_channel * out_channel) Lwt.t
-end
-
-module type Pgx_impl = sig
-  include Pgx.S with type 'a IO.t = 'a Lwt.t
 end

@@ -1,6 +1,6 @@
 open Lwt
 
-module Thread : Pgx_lwt.S.IO = struct
+module Thread : Pgx_lwt.IO_intf.S = struct
   type sockaddr =
     | Unix of string
     | Inet of string * int

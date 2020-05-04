@@ -1,9 +1,11 @@
-module S = S
+module IO_intf = Io_intf
+
+module type S = Pgx.S with type 'a IO.t = 'a Lwt.t
 
 module Thread = struct
   open Lwt
 
-  module Make (IO : S.IO) = struct
+  module Make (IO : IO_intf.S) = struct
     type 'a t = 'a Lwt.t
 
     let return = return
@@ -59,7 +61,7 @@ module Thread = struct
   end
 end
 
-module Make (IO : S.IO) = struct
+module Make (IO : IO_intf.S) = struct
   module Thread = Thread.Make (IO)
   include Pgx.Make (Thread)
 end

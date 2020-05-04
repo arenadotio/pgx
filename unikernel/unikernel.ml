@@ -19,7 +19,7 @@ struct
 
   let setup_database ~port ~user ~host ~password ~database pgx () =
     Logs.info (fun m -> m "setting up database");
-    let module P = (val pgx : Pgx_lwt.S.Pgx_impl) in
+    let module P = (val pgx : Pgx_lwt.S) in
     P.with_conn ~user ~host ~password ~port ~database (fun conn ->
         P.execute_unit
           conn
@@ -38,7 +38,7 @@ struct
 
   let get_users ~port ~user ~host ~password ~database pgx () =
     Logs.info (fun m -> m "Fetching users");
-    let module P = (val pgx : Pgx_lwt.S.Pgx_impl) in
+    let module P = (val pgx : Pgx_lwt.S) in
     P.with_conn ~user ~host ~password ~port ~database (fun conn ->
         let+ rows = P.execute conn "SELECT * FROM USERS" in
         List.map
