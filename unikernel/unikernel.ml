@@ -1,4 +1,3 @@
-open Lwt.Syntax
 open Lwt.Infix
 
 module Make
@@ -40,7 +39,8 @@ struct
     Logs.info (fun m -> m "Fetching users");
     let module P = (val pgx : Pgx_lwt.S) in
     P.with_conn ~user ~host ~password ~port ~database (fun conn ->
-        let+ rows = P.execute conn "SELECT * FROM USERS" in
+        P.execute conn "SELECT * FROM USERS"
+        >|= fun rows ->
         List.map
           (fun row ->
             match row with
@@ -51,7 +51,8 @@ struct
   ;;
 
   let print_users users =
-    let+ users = users in
+    users
+    >|= fun users ->
     List.iter
       (fun { id; email } -> Logs.info (fun m -> m "{id = %d; email = %s}\n" id email))
       users

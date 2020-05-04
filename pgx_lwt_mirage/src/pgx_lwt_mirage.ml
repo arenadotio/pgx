@@ -20,8 +20,11 @@
  *)
 
 open Lwt.Infix
-open Lwt.Syntax
 module Channel = Mirage_channel.Make (Conduit_mirage.Flow)
+
+(* Defining this inline so we can use older lwt versions. *)
+let ( let* ) = Lwt.bind
+let ( let+ ) t f = Lwt.map f t
 
 module Thread = struct
   type sockaddr =
