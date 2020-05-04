@@ -18,7 +18,7 @@
  * the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  *)
-module type IO = Io_intf.S
+module type Io = Io_intf.S
 
 (* FIXME: I can't figure out how to not duplicate these types from types.ml *)
 type oid = int32 [@@deriving sexp]
@@ -49,4 +49,4 @@ module Value = Pgx_value
 
 module type S = Pgx_intf.S
 
-module Make (Thread : IO) : S with type 'a IO.t = 'a Thread.t
+module Make (Thread : Io) : S with type 'a Io.t = 'a Thread.t

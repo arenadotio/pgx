@@ -467,12 +467,12 @@ let deserialize_string str =
 
 module Value = Pgx_value
 
-module type IO = Io_intf.S
+module type Io = Io_intf.S
 module type S = Pgx_intf.S
 
-module Make (Thread : IO) = struct
-  module IO = Thread
-  open IO
+module Make (Thread : Io) = struct
+  module Io = Thread
+  open Io
 
   type conn =
     { ichan : (in_channel[@sexp.opaque] (* In_channel wrapping socket. *))

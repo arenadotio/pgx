@@ -3,7 +3,7 @@ open Types
 module type S = sig
   type t
 
-  module IO : sig
+  module Io : sig
     type 'a t
 
     val return : 'a -> 'a t
@@ -31,12 +31,12 @@ module type S = sig
     -> ?verbose:int
     -> ?max_message_length:int
     -> unit
-    -> t IO.t
+    -> t Io.t
 
   (** Close the database handle.  You must call this after you have
       finished with the handle, or else you will get leaked file
       descriptors. *)
-  val close : t -> unit IO.t
+  val close : t -> unit Io.t
 
   (** Calls [connect], passes the DB handle to the callback, then calls
       [close]. This is the preferred way to use this library since it cleans up
@@ -50,16 +50,16 @@ module type S = sig
     -> ?unix_domain_socket_dir:string
     -> ?verbose:int
     -> ?max_message_length:int
-    -> (t -> 'a IO.t)
-    -> 'a IO.t
+    -> (t -> 'a Io.t)
+    -> 'a Io.t
 
   (** Ping the database.  If the database is not available, some sort of
       exception will be thrown. *)
-  val ping : t -> unit IO.t
+  val ping : t -> unit Io.t
 
   (** This function is a wrapper of [ping] that returns a boolean instead of
       raising an exception. *)
-  val alive : t -> bool IO.t
+  val alive : t -> bool Io.t
 
   (** Start a transaction. *)
   val begin_work
@@ -67,15 +67,15 @@ module type S = sig
     -> ?access:Access.t
     -> ?deferrable:bool
     -> t
-    -> t IO.t
+    -> t Io.t
 
   (** Commit a transaction. Throws an exception if no transaction is open.
       Use [with_transaction] when possible. *)
-  val commit : t -> unit IO.t
+  val commit : t -> unit Io.t
 
   (** Rollback a transaction. Throws an exception if no transaction is open.
       Use [with_transaction] when possible. *)
-  val rollback : t -> unit IO.t
+  val rollback : t -> unit Io.t
 
   (** [with_transaction db ?isolation ?access ?deferrable f] wraps your
       function [f] inside a transactional block.
@@ -89,8 +89,8 @@ module type S = sig
     -> ?access:Access.t
     -> ?deferrable:bool
     -> t
-    -> (t -> 'b IO.t)
-    -> 'b IO.t
+    -> (t -> 'b Io.t)
+    -> 'b Io.t
 
   module Prepared : sig
     type s [@@deriving sexp_of]
@@ -99,11 +99,11 @@ module type S = sig
         sets the parameter types to [types].
         If no [name] is given, a random name will be generated.
         If no types are given, then the PostgreSQL engine infers types. *)
-    val prepare : ?name:string -> ?types:oid list -> t -> query:string -> s IO.t
+    val prepare : ?name:string -> ?types:oid list -> t -> query:string -> s Io.t
 
     (** [close_statement t] closes a prepared statement and frees
         up any resources. *)
-    val close : s -> unit IO.t
+    val close : s -> unit Io.t
 
     (** [prepare] a query, execute [f], and then [close_statement] *)
     val with_prepare
@@ -111,8 +111,8 @@ module type S = sig
       -> ?types:oid list
       -> t
       -> query:string
-      -> f:(s -> 'a IO.t)
-      -> 'a IO.t
+      -> f:(s -> 'a Io.t)
+      -> 'a Io.t
 
     (** [execute conn ~params t] executes the given prepared statement, with
         the given parameters [params], returning the result rows (if any).
@@ -127,87 +127,87 @@ module type S = sig
         created in step (1) above (otherwise the unnamed portal is used).
         This is only important if you want to call {!describe_portal}
         to find out the result types. *)
-    val execute : ?portal:string -> s -> params:param list -> row list IO.t
+    val execute : ?portal:string -> s -> params:param list -> row list Io.t
 
     (** [execute_unit ?portal s ?params] same as execute, but intended
         for database calls that have side-affects rather than returning results *)
-    val execute_unit : ?portal:string -> s -> params:param list -> unit IO.t
+    val execute_unit : ?portal:string -> s -> params:param list -> unit Io.t
 
     val execute_fold
       :  ?portal:string
       -> s
       -> params:param list
       -> init:'accum
-      -> f:('accum -> row -> 'accum IO.t)
-      -> 'accum IO.t
+      -> f:('accum -> row -> 'accum Io.t)
+      -> 'accum Io.t
 
     val execute_iter
       :  ?portal:string
       -> s
       -> params:param list
-      -> f:(row -> unit IO.t)
-      -> unit IO.t
+      -> f:(row -> unit Io.t)
+      -> unit Io.t
 
     val execute_map
       :  ?portal:string
       -> s
       -> params:param list
-      -> f:(row -> 'a IO.t)
-      -> 'a list IO.t
+      -> f:(row -> 'a Io.t)
+      -> 'a list Io.t
 
-    val execute_many : s -> params:param list list -> row list list IO.t
+    val execute_many : s -> params:param list list -> row list list Io.t
 
     (** [describe_statement t] describes the statement's parameter types and
         result types. *)
-    val describe : s -> (params_description * Result_desc.t list option) IO.t
+    val describe : s -> (params_description * Result_desc.t list option) Io.t
 
     (** [close_portal conn ?portal ()] closes a portal and frees up any
         resources. *)
-    val close_portal : ?portal:string -> s -> unit IO.t
+    val close_portal : ?portal:string -> s -> unit Io.t
 
     (** [describe_portal conn ?portal ()] describes the named or unnamed
           portal's result types. *)
-    val describe_portal : ?portal:string -> s -> Result_desc.t list option IO.t
+    val describe_portal : ?portal:string -> s -> Result_desc.t list option Io.t
   end
 
   (** [execute conn ?params query] prepares and executes the statement
       [query] and returns the result. *)
-  val execute : ?params:row -> t -> string -> row list IO.t
+  val execute : ?params:row -> t -> string -> row list Io.t
 
   (** [execute_unit conn ?params query ] same as execute, but intended
       for database calls that have side-affects rather than returning results *)
-  val execute_unit : ?params:row -> t -> string -> unit IO.t
+  val execute_unit : ?params:row -> t -> string -> unit Io.t
 
   val execute_fold
     :  ?params:param list
     -> t
     -> string
     -> init:'accum
-    -> f:('accum -> row -> 'accum IO.t)
-    -> 'accum IO.t
+    -> f:('accum -> row -> 'accum Io.t)
+    -> 'accum Io.t
 
   val execute_map
     :  ?params:param list
     -> t
     -> string
-    -> f:(row -> 'a IO.t)
-    -> 'a list IO.t
+    -> f:(row -> 'a Io.t)
+    -> 'a list Io.t
 
   val execute_iter
     :  ?params:param list
     -> t
     -> string
-    -> f:(row -> unit IO.t)
-    -> unit IO.t
+    -> f:(row -> unit Io.t)
+    -> unit Io.t
 
   (** Prepares a query as in [execute] and then executes it once per set of
       parameters in [params]. This is more efficient than calling [execute]
       in a loop because the query is only prepared once. *)
-  val execute_many : t -> query:string -> params:param list list -> row list list IO.t
+  val execute_many : t -> query:string -> params:param list list -> row list list Io.t
 
   (** [simple_query conn query] executes the command(s) in the given [query]
       and returns a list of query results (i.e. if you run two queries, you
       will get a list with two elements: the results of the first query
       followed by the results of the second query. *)
-  val simple_query : t -> string -> row list list IO.t
+  val simple_query : t -> string -> row list list Io.t
 end

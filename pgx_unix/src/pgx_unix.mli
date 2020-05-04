@@ -19,7 +19,7 @@
  * Boston, MA 02111-1307, USA.
  *)
 
-include Pgx.S with type 'a IO.t = 'a
+include Pgx.S with type 'a Io.t = 'a
 
 (* for testing purposes *)
-module Simple_thread : Pgx.IO with type 'a t = 'a
+module Simple_thread : Pgx.Io with type 'a t = 'a

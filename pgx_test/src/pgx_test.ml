@@ -23,9 +23,9 @@ let check_results = Alcotest.(check (list (list (list (option string)))))
 
 module Make_tests
     (Pgx_impl : Pgx.S)
-    (Alcotest_io : ALCOTEST_IO with type 'a monad := 'a Pgx_impl.IO.t) =
+    (Alcotest_io : ALCOTEST_IO with type 'a monad := 'a Pgx_impl.Io.t) =
 struct
-  open Pgx_impl.IO
+  open Pgx_impl.Io
   open Pgx_impl
 
   let default_database = "postgres"

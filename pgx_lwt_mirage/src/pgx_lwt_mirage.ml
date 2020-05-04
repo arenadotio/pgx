@@ -113,7 +113,7 @@ struct
   let connect stack =
     let open_connection = connect_stack stack in
     (module struct
-      module T : Pgx_lwt.IO_intf.S = struct
+      module T : Pgx_lwt.Io_intf.S = struct
         include Thread
 
         let open_connection = open_connection

@@ -14,4 +14,4 @@ end
 
 module Make_tests
     (Pgx_impl : Pgx.S)
-    (Alcotest_io : ALCOTEST_IO with type 'a monad := 'a Pgx_impl.IO.t) : S
+    (Alcotest_io : ALCOTEST_IO with type 'a monad := 'a Pgx_impl.Io.t) : S
