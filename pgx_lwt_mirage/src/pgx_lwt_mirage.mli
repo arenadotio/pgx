@@ -1,6 +1,4 @@
-(* Draft for cherry-picking into pgx.
- *
- * Copyright (C) 2020 Petter A. Urkedal
+(* Copyright (C) 2020 Petter A. Urkedal
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
