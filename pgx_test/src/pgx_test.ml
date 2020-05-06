@@ -1,4 +1,13 @@
+open Base
+
 external reraise : exn -> _ = "%reraise"
+
+type uuid = Uuidm.t [@@deriving compare]
+
+let sexp_of_uuid t = Uuidm.to_string t |> sexp_of_string
+
+(* Not sure how else to ignore the unused type warnings *)
+let () = (sexp_of_uuid : uuid -> Sexp.t) |> ignore
 
 module type S = sig
   val run_tests : unit -> unit
@@ -14,13 +23,6 @@ module type ALCOTEST_IO = sig
   val run : string -> (string * unit test_case list) list -> unit
 end
 
-module Alcotest_ext = struct
-  let uuid = Alcotest.testable Uuidm.pp Uuidm.equal
-end
-
-let check_result = Alcotest.(check (list (list (option string))))
-let check_results = Alcotest.(check (list (list (list (option string)))))
-
 module Make_tests
     (Pgx_impl : Pgx.S)
     (Alcotest_io : ALCOTEST_IO with type 'a monad := 'a Pgx_impl.Io.t) =
@@ -35,7 +37,7 @@ struct
       Unix.getenv "PGUSER" |> ignore;
       true
     with
-    | Not_found -> false
+    | Caml.Not_found | Not_found_s _ -> false
   ;;
 
   let force_tests =
@@ -43,7 +45,7 @@ struct
       (Unix.getenv "PGX_FORCE_TESTS" : string) |> ignore;
       true
     with
-    | Not_found -> false
+    | Caml.Not_found | Not_found_s _ -> false
   ;;
 
   let set_to_default_db () = Unix.putenv "PGDATABASE" default_database
@@ -59,8 +61,8 @@ struct
 
   let with_temp_db f =
     let random_db () =
-      let random_char () = 10 |> Random.int |> string_of_int |> fun s -> s.[0] in
-      "pgx_test_" ^ String.init 8 (fun _ -> random_char ())
+      let random_char () = 10 |> Random.int |> Int.to_string |> fun s -> s.[0] in
+      "pgx_test_" ^ String.init 8 ~f:(fun _ -> random_char ())
     in
     let ignore_empty = function
       | [] -> ()
@@ -92,8 +94,8 @@ struct
 
   let deferred_list_map l ~f =
     List.fold_left
-      (fun acc x -> acc >>= fun acc -> f x >>| fun res -> res :: acc)
-      (return [])
+      ~f:(fun acc x -> acc >>= fun acc -> f x >>| fun res -> res :: acc)
+      ~init:(return [])
       l
     >>| List.rev
   ;;
@@ -109,7 +111,9 @@ struct
     let tests =
       [ Alcotest_io.test_case "test db connection" `Quick (fun () ->
             with_temp_db (fun _ ~db_name:_ -> return true)
-            >>| Alcotest.(check bool) "with_temp_db makes a connection" true)
+            >>| [%test_result: bool]
+                  ~message:"with_temp_db makes a connection"
+                  ~expect:true)
       ; Alcotest_io.test_case
           "test fake table"
           `Quick
@@ -117,21 +121,25 @@ struct
       ; Alcotest_io.test_case "query - 1 query" `Quick (fun () ->
             with_conn (fun dbh ->
                 simple_query dbh "select 1"
-                >>| check_results "select 1" [ [ [ Some "1" ] ] ]))
+                >>| [%test_result: Pgx.row list list]
+                      ~message:"select 1"
+                      ~expect:[ [ [ Some "1" ] ] ]))
       ; Alcotest_io.test_case "query - multiple" `Quick (fun () ->
             with_conn (fun dbh ->
                 simple_query dbh "select 1; select 2; select 3"
-                >>| check_results
-                      "select three"
-                      [ [ [ Some "1" ] ]; [ [ Some "2" ] ]; [ [ Some "3" ] ] ]))
+                >>| [%test_result: Pgx.row list list]
+                      ~message:"select three"
+                      ~expect:[ [ [ Some "1" ] ]; [ [ Some "2" ] ]; [ [ Some "3" ] ] ]))
       ; Alcotest_io.test_case "query - multiple single query" `Quick (fun () ->
             with_conn (fun dbh ->
                 simple_query dbh "select 1 union all select 2 union all select 3"
-                >>| check_results
-                      "select unit all"
-                      [ [ [ Some "1" ]; [ Some "2" ]; [ Some "3" ] ] ]))
+                >>| [%test_result: Pgx.row list list]
+                      ~message:"select unit all"
+                      ~expect:[ [ [ Some "1" ]; [ Some "2" ]; [ Some "3" ] ] ]))
       ; Alcotest_io.test_case "query - empty" `Quick (fun () ->
-            with_conn (fun dbh -> simple_query dbh "" >>| check_results "empty query" []))
+            with_conn (fun dbh ->
+                simple_query dbh ""
+                >>| [%test_result: Pgx.row list list] ~message:"empty query" ~expect:[]))
       ; Alcotest_io.test_case
           "test fake column"
           `Quick
@@ -148,26 +156,30 @@ struct
             with_conn
             @@ fun dbh ->
             simple_query dbh "DROP VIEW IF EXISTS fake_view_doesnt_exist"
-            >>| List.iter (check_result "drop view if exists" []))
+            >>| List.iter
+                  ~f:
+                    ([%test_result: Pgx.row list]
+                       ~message:"drop view if exists"
+                       ~expect:[]))
       ; Alcotest_io.test_case "test fold" `Quick (fun () ->
             with_conn
             @@ fun dbh ->
             Prepared.(
               with_prepare dbh ~query:"values (1,2),(3,4)" ~f:(fun s ->
                   execute_fold s ~params:[] ~init:[] ~f:(fun acc a -> return (a :: acc))))
-            >>| check_result
-                  "fold values"
-                  [ [ Some "3"; Some "4" ]; [ Some "1"; Some "2" ] ])
+            >>| [%test_result: Pgx.row list]
+                  ~message:"fold values"
+                  ~expect:[ [ Some "3"; Some "4" ]; [ Some "1"; Some "2" ] ])
       ; Alcotest_io.test_case "test execute_prepared" `Quick (fun () ->
             with_conn
             @@ fun dbh ->
             Prepared.(prepare dbh ~query:"values (1,2),(3,4)" >>= execute ~params:[])
-            >>| check_result
-                  "prepare & execute"
-                  [ [ Some "1"; Some "2" ]; [ Some "3"; Some "4" ] ])
+            >>| [%test_result: Pgx.row list]
+                  ~message:"prepare & execute"
+                  ~expect:[ [ Some "1"; Some "2" ]; [ Some "3"; Some "4" ] ])
       ; Alcotest_io.test_case "test execute_iter" `Quick (fun () ->
             let n = ref 0 in
-            let rows = Array.make 2 [] in
+            let rows = Array.create ~len:2 [] in
             with_conn
             @@ fun dbh ->
             execute_iter dbh "values (1,2),(3,4)" ~f:(fun row ->
@@ -176,9 +188,9 @@ struct
                 return ())
             >>| fun () ->
             Array.to_list rows
-            |> check_result
-                 "execute_iter"
-                 [ [ Some "1"; Some "2" ]; [ Some "3"; Some "4" ] ])
+            |> [%test_result: Pgx.row list]
+                 ~message:"execute_iter"
+                 ~expect:[ [ Some "1"; Some "2" ]; [ Some "3"; Some "4" ] ])
       ; Alcotest_io.test_case "with_prepare" `Quick (fun () ->
             with_conn
             @@ fun dbh ->
@@ -186,7 +198,7 @@ struct
             Prepared.(
               with_prepare dbh ~name ~query:"values ($1)" ~f:(fun s ->
                   execute s ~params:[ Some "test" ]))
-            >>| check_result name [ [ Some "test" ] ])
+            >>| [%test_result: Pgx.row list] ~message:name ~expect:[ [ Some "test" ] ])
       ; Alcotest_io.test_case "interleave unnamed prepares" `Quick (fun () ->
             with_conn
             @@ fun dbh ->
@@ -196,8 +208,14 @@ struct
                     execute s1 ~params:[ Some "test" ]
                     >>= fun r1 -> execute s2 ~params:[] >>| fun r2 -> r1, r2))
             >>| fun (r1, r2) ->
-            check_result "outer prepare" [ [ Some "test" ] ] r1;
-            check_result "inner prepare" [ [ Some "1" ] ] r2)
+            [%test_result: Pgx.row list]
+              ~message:"outer prepare"
+              ~expect:[ [ Some "test" ] ]
+              r1;
+            [%test_result: Pgx.row list]
+              ~message:"inner prepare"
+              ~expect:[ [ Some "1" ] ]
+              r2)
       ; Alcotest_io.test_case "in_transaction invariant" `Quick (fun () ->
             with_conn
             @@ fun dbh ->
@@ -227,16 +245,16 @@ struct
             let params = [ [ Some "1" ]; [ Some "2" ]; [ Some "3" ] ] in
             with_conn (fun dbh ->
                 execute_many dbh ~query:"select $1::int" ~params
-                >>| check_results
-                      "execute_many result"
-                      [ [ [ Some "1" ] ]; [ [ Some "2" ] ]; [ [ Some "3" ] ] ]))
+                >>| [%test_result: Pgx.row list list]
+                      ~message:"execute_many result"
+                      ~expect:[ [ [ Some "1" ] ]; [ [ Some "2" ] ]; [ [ Some "3" ] ] ]))
       ; Alcotest_io.test_case "query with SET" `Quick (fun () ->
             with_conn (fun dbh ->
                 simple_query dbh "SET LOCAL TIME ZONE 'Europe/Rome'; SELECT 'x'"
                 >>| function
                 | [ []; [ [ res ] ] ] ->
                   Pgx.Value.to_string_exn res
-                  |> Alcotest.(check string) "SELECT after SET" "x"
+                  |> [%test_result: string] ~message:"SELECT after SET" ~expect:"x"
                 | _ -> assert false))
       ; Alcotest_io.test_case "ping" `Quick (fun () -> with_conn (fun dbh -> ping dbh))
       ; Alcotest_io.test_case "with_prepare and describe_statement" `Quick (fun () ->
@@ -259,12 +277,13 @@ struct
                    grand_slams     integer); INSERT INTO tennis_greats VALUES ('Roger \
                    Federer', 19), ('Rafael Nadal', 15); COPY tennis_greats TO STDOUT \
                    (DELIMITER '|')"
-                >>| check_results
-                      "copy out result"
-                      [ []
-                      ; []
-                      ; [ [ Some "Roger Federer|19\n" ]; [ Some "Rafael Nadal|15\n" ] ]
-                      ]))
+                >>| [%test_result: Pgx.row list list]
+                      ~message:"copy out result"
+                      ~expect:
+                        [ []
+                        ; []
+                        ; [ [ Some "Roger Federer|19\n" ]; [ Some "Rafael Nadal|15\n" ] ]
+                        ]))
       ; Alcotest_io.test_case "copy out extended query" `Quick (fun () ->
             with_temp_db (fun dbh ~db_name:_ ->
                 execute
@@ -277,9 +296,9 @@ struct
                   "INSERT INTO tennis_greats VALUES ('Roger Federer', 19), ('Rafael \
                    Nadal', 15);"
                 >>= fun _ -> execute dbh "COPY tennis_greats TO STDOUT (DELIMITER '|')")
-            >>| check_result
-                  "copy out extended result"
-                  [ [ Some "Roger Federer|19\n" ]; [ Some "Rafael Nadal|15\n" ] ])
+            >>| [%test_result: Pgx.row list]
+                  ~message:"copy out extended result"
+                  ~expect:[ [ Some "Roger Federer|19\n" ]; [ Some "Rafael Nadal|15\n" ] ])
       ; Alcotest_io.test_case "execute_prepared_iter and transact test" `Quick (fun () ->
             with_temp_db (fun dbh ~db_name:_ ->
                 with_transaction dbh (fun dbh ->
@@ -305,9 +324,9 @@ struct
                           ~params:Pgx.Value.[ of_string "Roger Federer"; of_int 19 ]
                           ~f:(fun fields -> return (acc := fields :: !acc))
                         >>= fun () -> return !acc))
-                >>| check_result
-                      "prepare & transact result"
-                      [ [ Some "Roger Federer"; Some "19" ] ]))
+                >>| [%test_result: Pgx.row list]
+                      ~message:"prepare & transact result"
+                      ~expect:[ [ Some "Roger Federer"; Some "19" ] ]))
       ; Alcotest_io.test_case "commit while not in transaction" `Quick (fun () ->
             try_with (fun () ->
                 with_conn
@@ -326,7 +345,8 @@ struct
             | Error _ -> return ())
       ; Alcotest_io.test_case "alive test" `Quick (fun () ->
             with_conn
-            @@ fun dbh -> alive dbh >>| Alcotest.(check bool) "alive result" true)
+            @@ fun dbh ->
+            alive dbh >>| [%test_result: bool] ~message:"alive result" ~expect:true)
       ; Alcotest_io.test_case "isolation level tests" `Quick (fun () ->
             with_temp_db (fun dbh ~db_name:_ ->
                 execute
@@ -357,9 +377,9 @@ struct
                       ~params:[ Some "Andy Murray"; Some "3" ]
                       ~f:(fun fields -> return (acc := fields :: !acc))
                     >>= fun () -> return !acc)
-                >>| check_result
-                      "isolation query result"
-                      [ [ Some "Andy Murray"; Some "3" ] ]))
+                >>| [%test_result: Pgx.row list]
+                      ~message:"isolation query result"
+                      ~expect:[ [ Some "Andy Murray"; Some "3" ] ]))
       ; Alcotest_io.test_case "multi typed table" `Quick (fun () ->
             with_temp_db (fun dbh ~db_name:_ ->
                 simple_query
@@ -368,7 +388,7 @@ struct
                    numeric);"
                 >>= fun _ ->
                 let expect_uuid = Uuidm.create `V4 in
-                let all_chars = String.init 255 char_of_int in
+                let all_chars = String.init 255 ~f:Char.of_int_exn in
                 let params =
                   let open Pgx.Value in
                   [ of_uuid expect_uuid
@@ -391,20 +411,16 @@ struct
                   let int_ = to_int int_ in
                   let string_ = to_string string_ in
                   let numeric = to_string numeric in
-                  Alcotest.(Alcotest_ext.(check (option uuid)))
-                    "uuid"
-                    (Some expect_uuid)
-                    uuid;
-                  Alcotest.(check (option int)) "int" (Some 12) int_;
-                  Alcotest.(check (option string)) "string" (Some all_chars) string_;
-                  Alcotest.(check (option string))
-                    "numeric"
-                    (Some "9223372036854775807")
+                  [%test_result: uuid option] ~expect:(Some expect_uuid) uuid;
+                  [%test_result: int option] ~expect:(Some 12) int_;
+                  [%test_result: string option] ~expect:(Some all_chars) string_;
+                  [%test_result: string option]
+                    ~expect:(Some "9223372036854775807")
                     numeric
                 | _ ->
                   Alcotest.fail "Error: multi typed table: got unexpected query result"))
       ; Alcotest_io.test_case "binary string handling" `Quick (fun () ->
-            let all_chars = String.init 255 char_of_int in
+            let all_chars = String.init 255 ~f:Char.of_int_exn in
             with_conn (fun db ->
                 [ "SELECT decode($1, 'base64')", Base64.encode_exn all_chars, all_chars
                   (* Postgres adds whitespace to base64 encodings, so we strip it
@@ -417,14 +433,13 @@ struct
                        let params = [ param |> Pgx.Value.of_string ] in
                        execute ~params db query
                        >>| function
-                       | [ [ Some actual ] ] ->
-                         Alcotest.(check string) "binary string" expect actual
+                       | [ [ Some actual ] ] -> [%test_result: string] ~expect actual
                        | _ -> assert false))
-            >>| List.iter (fun () -> ()))
+            >>| List.iter ~f:(fun () -> ()))
       ]
     in
     if force_tests || have_pg_config
     then Alcotest_io.run "pgx_test" [ "pgx_async", tests ]
-    else print_endline "Skipping PostgreSQL tests since PGUSER is unset."
+    else Caml.print_endline "Skipping PostgreSQL tests since PGUSER is unset."
   ;;
 end

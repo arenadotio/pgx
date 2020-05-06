@@ -9,7 +9,7 @@ let equal_value (x : t) (y : t) = x = y
 let pp_hstore ppf x = Sexp.pp_hum ppf (sexp_of_hstore x)
 let equal_hstore x y = Sexp.equal (sexp_of_hstore x) (sexp_of_hstore y)
 let printer sexp value = sexp value |> Sexp.to_string_hum
-let sort_hstore = List.sort (fun (k, _) (k', _) -> compare k k')
+let sort_hstore = List.sort (fun (k, _) (k', _) -> String.compare k k')
 let to_hstore_sorted v = to_hstore v |> Option.map sort_hstore
 let to_hstore_sorted_exn v = to_hstore_exn v |> sort_hstore
 let pp_inet ppf (addr, port) = Format.fprintf ppf "%a:%d" Ipaddr.pp addr port
