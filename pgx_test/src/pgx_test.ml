@@ -1,3 +1,5 @@
+open Base
+
 external reraise : exn -> _ = "%reraise"
 
 module type S = sig
@@ -35,7 +37,7 @@ struct
       Unix.getenv "PGUSER" |> ignore;
       true
     with
-    | Not_found -> false
+    | Caml.Not_found | Not_found_s _ -> false
   ;;
 
   let force_tests =
@@ -43,7 +45,7 @@ struct
       (Unix.getenv "PGX_FORCE_TESTS" : string) |> ignore;
       true
     with
-    | Not_found -> false
+    | Caml.Not_found | Not_found_s _ -> false
   ;;
 
   let set_to_default_db () = Unix.putenv "PGDATABASE" default_database
@@ -59,8 +61,8 @@ struct
 
   let with_temp_db f =
     let random_db () =
-      let random_char () = 10 |> Random.int |> string_of_int |> fun s -> s.[0] in
-      "pgx_test_" ^ String.init 8 (fun _ -> random_char ())
+      let random_char () = 10 |> Random.int |> Int.to_string |> fun s -> s.[0] in
+      "pgx_test_" ^ String.init 8 ~f:(fun _ -> random_char ())
     in
     let ignore_empty = function
       | [] -> ()
@@ -86,14 +88,14 @@ struct
   let assert_error_test query () =
     try_with (fun () -> with_conn @@ fun dbh -> execute dbh query)
     >>= function
-    | Ok _ -> failwith "error expected"
+    | Ok _ -> Alcotest.fail "error expected"
     | Error _ -> return ()
   ;;
 
   let deferred_list_map l ~f =
     List.fold_left
-      (fun acc x -> acc >>= fun acc -> f x >>| fun res -> res :: acc)
-      (return [])
+      ~f:(fun acc x -> acc >>= fun acc -> f x >>| fun res -> res :: acc)
+      ~init:(return [])
       l
     >>| List.rev
   ;;
@@ -148,7 +150,7 @@ struct
             with_conn
             @@ fun dbh ->
             simple_query dbh "DROP VIEW IF EXISTS fake_view_doesnt_exist"
-            >>| List.iter (check_result "drop view if exists" []))
+            >>| List.iter ~f:(check_result "drop view if exists" []))
       ; Alcotest_io.test_case "test fold" `Quick (fun () ->
             with_conn
             @@ fun dbh ->
@@ -167,7 +169,7 @@ struct
                   [ [ Some "1"; Some "2" ]; [ Some "3"; Some "4" ] ])
       ; Alcotest_io.test_case "test execute_iter" `Quick (fun () ->
             let n = ref 0 in
-            let rows = Array.make 2 [] in
+            let rows = Array.create ~len:2 [] in
             with_conn
             @@ fun dbh ->
             execute_iter dbh "values (1,2),(3,4)" ~f:(fun row ->
@@ -205,7 +207,7 @@ struct
                 with_transaction dbh (fun dbh ->
                     with_transaction dbh (fun _ -> return "unreachable")))
             >>| function
-            | Ok "unreachable" -> failwith "in_transaction invariant failed"
+            | Ok "unreachable" -> Alcotest.fail "in_transaction invariant failed"
             | Ok _ -> assert false
             | Error (Invalid_argument _) -> ()
             | Error exn -> reraise exn)
@@ -220,7 +222,7 @@ struct
             >>= fun _ ->
             try_with p
             >>| function
-            | Ok _ -> failwith "Triple prepare should fail"
+            | Ok _ -> Alcotest.fail "Triple prepare should fail"
             | Error (Pgx.PostgreSQL_Error _) -> ()
             | Error exn -> reraise exn)
       ; Alcotest_io.test_case "execute_many function" `Quick (fun () ->
@@ -314,7 +316,7 @@ struct
                 @@ fun dbh ->
                 begin_work dbh >>= fun dbh -> commit dbh >>= fun () -> commit dbh)
             >>= function
-            | Ok _ -> failwith "commit while not in transaction error expected"
+            | Ok _ -> Alcotest.fail "commit while not in transaction error expected"
             | Error _ -> return ())
       ; Alcotest_io.test_case "rollback while not in transaction" `Quick (fun () ->
             try_with (fun () ->
@@ -322,7 +324,7 @@ struct
                 @@ fun dbh ->
                 begin_work dbh >>= fun dbh -> commit dbh >>= fun () -> rollback dbh)
             >>= function
-            | Ok _ -> failwith "rollback while not in transaction error expected"
+            | Ok _ -> Alcotest.fail "rollback while not in transaction error expected"
             | Error _ -> return ())
       ; Alcotest_io.test_case "alive test" `Quick (fun () ->
             with_conn
@@ -368,7 +370,7 @@ struct
                    numeric);"
                 >>= fun _ ->
                 let expect_uuid = Uuidm.create `V4 in
-                let all_chars = String.init 255 char_of_int in
+                let all_chars = String.init 255 ~f:Char.of_int_exn in
                 let params =
                   let open Pgx.Value in
                   [ of_uuid expect_uuid
@@ -404,7 +406,7 @@ struct
                 | _ ->
                   Alcotest.fail "Error: multi typed table: got unexpected query result"))
       ; Alcotest_io.test_case "binary string handling" `Quick (fun () ->
-            let all_chars = String.init 255 char_of_int in
+            let all_chars = String.init 255 ~f:Char.of_int_exn in
             with_conn (fun db ->
                 [ "SELECT decode($1, 'base64')", Base64.encode_exn all_chars, all_chars
                   (* Postgres adds whitespace to base64 encodings, so we strip it
@@ -420,11 +422,119 @@ struct
                        | [ [ Some actual ] ] ->
                          Alcotest.(check string) "binary string" expect actual
                        | _ -> assert false))
-            >>| List.iter (fun () -> ()))
+            >>| List.iter ~f:(fun () -> ()))
+      ; Alcotest_io.test_case "UTF-8 partial round-trip 1" `Quick (fun () ->
+            (* Select a literal string *)
+            let expect = "test-ä-test" in
+            with_conn (fun db ->
+                simple_query
+                  db
+                  {|
+                CREATE TEMPORARY TABLE this_test (id text);
+                INSERT INTO this_test (id) VALUES ('test-ä-test')
+              |}
+                >>= fun _ ->
+                execute db "SELECT id FROM this_test"
+                >>| function
+                | [ [ result ] ] ->
+                  [%test_result: string option]
+                    ~expect:(Some expect)
+                    (Pgx.Value.to_string result)
+                | _ -> assert false))
+      ; Alcotest_io.test_case "UTF-8 partial round-trip 1 with where" `Quick (fun () ->
+            (* Select a literal string *)
+            let expect = "test-ä-test" in
+            with_conn (fun db ->
+                simple_query
+                  db
+                  {|
+                  CREATE TEMPORARY TABLE this_test (id text);
+                  INSERT INTO this_test (id) VALUES ('test-ä-test')
+                |}
+                >>= fun _ ->
+                execute
+                  db
+                  ~params:[ Pgx.Value.of_string expect ]
+                  "SELECT id FROM this_test WHERE id = $1"
+                >>| function
+                | [ [ result ] ] ->
+                  [%test_result: string option]
+                    ~expect:(Some expect)
+                    (Pgx.Value.to_string result)
+                | [] -> Alcotest.fail "Expected one row but got zero"
+                | _ -> assert false))
+      ; Alcotest_io.test_case "UTF-8 partial round-trip 2" `Quick (fun () ->
+            (* Insert string as a param, then select back the contents of
+               the table *)
+            let expect = "test-ä-test" in
+            with_conn (fun db ->
+                simple_query db "CREATE TEMPORARY TABLE this_test (id text)"
+                >>= fun _ ->
+                execute
+                  db
+                  ~params:[ Pgx.Value.of_string expect ]
+                  "INSERT INTO this_test (id) VALUES ($1)"
+                >>= fun _ ->
+                execute db "SELECT id FROM this_test"
+                >>| function
+                | [ [ result ] ] ->
+                  [%test_result: string option]
+                    ~expect:(Some expect)
+                    (Pgx.Value.to_string result)
+                | _ -> assert false))
+      ; Alcotest_io.test_case "UTF-8 partial round-trip 3" `Quick (fun () ->
+            with_conn (fun db ->
+                simple_query
+                  db
+                  {|
+                    CREATE TEMPORARY TABLE this_test (id text);
+                    INSERT INTO this_test (id) VALUES('test-\303\244-test')
+                  |}
+                >>= fun _ ->
+                execute db "SELECT id FROM this_test"
+                >>| function
+                | [ [ result ] ] ->
+                  [%test_result: string]
+                    ~expect:{|test-\303\244-test|}
+                    (Pgx.Value.to_string_exn result)
+                | _ -> assert false))
+      ; Alcotest_io.test_case "UTF-8 round-trip" `Quick (fun () ->
+            (* Select the contents of a param *)
+            let expect = "test-ä-test" in
+            with_conn (fun db ->
+                execute db ~params:[ Pgx.Value.of_string expect ] "SELECT $1::VARCHAR"
+                >>| function
+                | [ [ result ] ] ->
+                  [%test_result: string option]
+                    ~expect:(Some expect)
+                    (Pgx.Value.to_string result)
+                | _ -> assert false))
+      ; Alcotest_io.test_case "UTF-8 round-trip where" `Quick (fun () ->
+            (* Insert string as a param, then select back the contents of
+               the table using a WHERE *)
+            let expect = "test-ä-test" in
+            with_conn (fun db ->
+                simple_query db "CREATE TEMPORARY TABLE this_test (id text)"
+                >>= fun _ ->
+                execute
+                  db
+                  ~params:[ Pgx.Value.of_string expect ]
+                  "INSERT INTO this_test (id) VALUES ($1)"
+                >>= fun _ ->
+                execute
+                  db
+                  ~params:[ Pgx.Value.of_string expect ]
+                  "SELECT id FROM this_test WHERE id = $1"
+                >>| function
+                | [ [ result ] ] ->
+                  [%test_result: string option]
+                    ~expect:(Some expect)
+                    (Pgx.Value.to_string result)
+                | _ -> assert false))
       ]
     in
     if force_tests || have_pg_config
     then Alcotest_io.run "pgx_test" [ "pgx_async", tests ]
-    else print_endline "Skipping PostgreSQL tests since PGUSER is unset."
+    else Caml.print_endline "Skipping PostgreSQL tests since PGUSER is unset."
   ;;
 end
