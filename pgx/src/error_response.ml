@@ -1,5 +1,4 @@
-open Printf
-open Sexplib0.Sexp_conv
+open Base
 open Pgx_aux
 
 type t =
@@ -8,7 +7,7 @@ type t =
   ; message : string
   ; custom : (char * string) list
   }
-[@@deriving sexp]
+[@@deriving compare, sexp]
 
 let should_print t ~verbose =
   if verbose < 1
@@ -22,10 +21,13 @@ let should_print t ~verbose =
 ;;
 
 let to_string ?(verbose = false) t =
-  let msg = sprintf "%s: %s: %s" t.severity t.code t.message in
+  let msg = Printf.sprintf "%s: %s: %s" t.severity t.code t.message in
   let field_info =
     if verbose
-    then List.map (fun (field_type, field) -> sprintf "%c: %s" field_type field) t.custom
+    then
+      List.map
+        (fun (field_type, field) -> Printf.sprintf "%c: %s" field_type field)
+        t.custom
     else []
   in
   String.concat "\n" (msg :: field_info)

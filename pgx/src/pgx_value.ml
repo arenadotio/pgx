@@ -1,7 +1,7 @@
-open Sexplib0.Sexp_conv
+open Base
 open Pgx_aux
 
-type t = string option [@@deriving sexp_of]
+type t = string option [@@deriving compare, sexp_of]
 
 exception Conversion_failure of string [@@deriving sexp]
 
@@ -32,29 +32,29 @@ let to_bool_exn = required to_bool'
 let to_bool = Option.map to_bool'
 
 let of_float' f =
-  match classify_float f with
-  | FP_infinite when f > 0. -> "Infinity"
-  | FP_infinite when f < 0. -> "-Infinity"
-  | FP_nan -> "NaN"
-  | _ -> string_of_float f
+  match Float.classify f with
+  | Float.Class.Infinite when Float.(f > 0.) -> "Infinity"
+  | Infinite when Float.(f < 0.) -> "-Infinity"
+  | Nan -> "NaN"
+  | _ -> Float.to_string f
 ;;
 
 let of_float f = Some (of_float' f)
 
 let to_float' t =
   match String.lowercase_ascii t with
-  | "infinity" -> infinity
-  | "-infinity" -> neg_infinity
-  | "nan" -> nan
+  | "infinity" -> Float.infinity
+  | "-infinity" -> Float.neg_infinity
+  | "nan" -> Float.nan
   | _ ->
-    (try float_of_string t with
-    | Failure _ -> convert_failure "float" t)
+    (try Float.of_string t with
+    | Failure _ | Invalid_argument _ -> convert_failure "float" t)
 ;;
 
 let to_float_exn = required to_float'
 let to_float = Option.map to_float'
 
-type hstore = (string * string option) list [@@deriving sexp]
+type hstore = (string * string option) list [@@deriving compare, sexp]
 
 let of_hstore hstore =
   let string_of_quoted str = "\"" ^ str ^ "\"" in
@@ -72,22 +72,22 @@ let of_hstore hstore =
 
 let to_hstore' str =
   let expect target stream =
-    if List.exists (fun c -> c <> Stream.next stream) target
+    if List.exists (fun c -> Char.(c <> Caml.Stream.next stream)) target
     then convert_failure "hstore" str
   in
   let parse_quoted stream =
     let rec loop accum stream =
-      match Stream.next stream with
+      match Caml.Stream.next stream with
       | '"' -> String.implode (List.rev accum)
       (* FIXME: Slashes don't seem to round-trip properly *)
-      | '\\' -> loop (Stream.next stream :: accum) stream
+      | '\\' -> loop (Caml.Stream.next stream :: accum) stream
       | x -> loop (x :: accum) stream
     in
     expect [ '"' ] stream;
     loop [] stream
   in
   let parse_value stream =
-    match Stream.peek stream with
+    match Caml.Stream.peek stream with
     | Some 'N' ->
       expect [ 'N'; 'U'; 'L'; 'L' ] stream;
       None
@@ -102,23 +102,23 @@ let to_hstore' str =
   let parse_main stream =
     let rec loop accum stream =
       let mapping = parse_mapping stream in
-      match Stream.peek stream with
+      match Caml.Stream.peek stream with
       | Some _ ->
         expect [ ','; ' ' ] stream;
         loop (mapping :: accum) stream
       | None -> mapping :: accum
     in
-    match Stream.peek stream with
+    match Caml.Stream.peek stream with
     | Some _ -> loop [] stream
     | None -> []
   in
-  parse_main (Stream.of_string str)
+  parse_main (Caml.Stream.of_string str)
 ;;
 
 let to_hstore_exn = required to_hstore'
 let to_hstore = Option.map to_hstore'
 
-type inet = Ipaddr.t * int
+type inet = Ipaddr.t * int [@@deriving compare]
 
 let sexp_of_inet (addr, mask) = [%sexp_of: string * int] (Ipaddr.to_string addr, mask)
 
@@ -129,10 +129,10 @@ let of_inet (addr, mask) =
     | Ipaddr.V6 _ -> 128
   in
   let addr = Ipaddr.to_string addr in
-  if mask = hostmask
+  if Int.(mask = hostmask)
   then Some addr
   else if mask >= 0 && mask < hostmask
-  then Some (addr ^ "/" ^ string_of_int mask)
+  then Some (addr ^ "/" ^ Int.to_string mask)
   else invalid_arg "mask"
 ;;
 
@@ -153,22 +153,22 @@ let to_inet' =
       (* optional match *)
       let mask =
         try Re.Group.get subs 3 with
-        | Not_found -> ""
+        | Caml.Not_found | Not_found_s _ -> ""
       in
-      if mask = ""
-      then addr, if Re.Group.get subs 2 = "." then 32 else 128
-      else addr, int_of_string mask
+      if String.equal mask ""
+      then addr, if String.equal (Re.Group.get subs 2) "." then 32 else 128
+      else addr, Int.of_string mask
     with
     | _ -> convert_failure "inet" str
 ;;
 
 let to_inet_exn = required to_inet'
 let to_inet = Option.map to_inet'
-let of_int i = Some (string_of_int i)
+let of_int i = Some (Int.to_string i)
 
 let to_int' t =
-  try int_of_string t with
-  | Failure _ -> convert_failure "int" t
+  try Int.of_string t with
+  | Failure _ | Invalid_argument _ -> convert_failure "int" t
 ;;
 
 let to_int_exn = required to_int'
@@ -177,7 +177,7 @@ let of_int32 i = Some (Int32.to_string i)
 
 let to_int32' t =
   try Int32.of_string t with
-  | Failure _ -> convert_failure "int32" t
+  | Failure _ | Invalid_argument _ -> convert_failure "int32" t
 ;;
 
 let to_int32_exn = required to_int32'
@@ -186,7 +186,7 @@ let of_int64 i = Some (Int64.to_string i)
 
 let to_int64' t =
   try Int64.of_string t with
-  | Failure _ -> convert_failure "int64" t
+  | Failure _ | Invalid_argument _ -> convert_failure "int64" t
 ;;
 
 let to_int64_exn = required to_int64'
@@ -224,18 +224,18 @@ let of_list (xs : t list) =
 
 let to_list' str =
   let n = String.length str in
-  if n = 0 || str.[0] <> '{' || str.[n - 1] <> '}' then convert_failure "list" str;
+  if n = 0 || Char.(str.[0] <> '{' || str.[n - 1] <> '}') then convert_failure "list" str;
   let str = String.sub str 1 (n - 2) in
   let buf = Buffer.create 128 in
   let add_field accum =
     let x = Buffer.contents buf in
     Buffer.clear buf;
     let field =
-      if x = "NULL"
+      if String.equal x "NULL"
       then None
       else (
         let n = String.length x in
-        if n >= 2 && x.[0] = '"' then Some (String.sub x 1 (n - 2)) else Some x)
+        if n >= 2 && Char.(x.[0] = '"') then Some (String.sub x 1 (n - 2)) else Some x)
     in
     field :: accum
   in
@@ -257,7 +257,7 @@ let to_list' str =
 let to_list_exn = required to_list'
 let to_list = Option.map to_list'
 
-type point = float * float [@@deriving sexp]
+type point = float * float [@@deriving compare, sexp]
 
 let of_point (x, y) =
   let x = of_float' x in
@@ -277,11 +277,9 @@ let to_point' =
   fun str ->
     try
       let subs = Re.exec point_re str in
-      float_of_string (Re.Group.get subs 1), float_of_string (Re.Group.get subs 2)
+      Float.of_string (Re.Group.get subs 1), Float.of_string (Re.Group.get subs 2)
     with
-    | e ->
-      Printexc.to_string e |> print_endline;
-      convert_failure "point" str
+    | _ -> convert_failure "point" str
 ;;
 
 let to_point_exn = required to_point'
@@ -299,7 +297,7 @@ let to_unit' = function
 let to_unit_exn = required to_unit'
 let to_unit = Option.map to_unit'
 
-type uuid = Uuidm.t
+type uuid = Uuidm.t [@@deriving compare]
 
 let sexp_of_uuid u = Uuidm.to_string u |> sexp_of_string
 let of_uuid s = Some (Uuidm.to_string s)

@@ -1,6 +1,6 @@
 type t =
   | Read_write
   | Read_only
-[@@deriving sexp]
+[@@deriving compare, sexp]
 
 val to_string : t -> string

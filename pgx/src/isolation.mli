@@ -4,6 +4,6 @@ type t =
   | Repeatable_read
   | Read_committed
   | Read_uncommitted
-[@@deriving sexp]
+[@@deriving compare, sexp]
 
 val to_string : t -> string

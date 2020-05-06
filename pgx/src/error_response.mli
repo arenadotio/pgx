@@ -4,7 +4,7 @@ type t =
   ; message : string
   ; custom : (char * string) list
   }
-[@@deriving sexp]
+[@@deriving compare, sexp]
 
 val should_print : t -> verbose:int -> bool
 val to_string : ?verbose:bool -> t -> string

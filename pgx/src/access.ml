@@ -1,7 +1,7 @@
 type t =
   | Read_write
   | Read_only
-[@@deriving sexp]
+[@@deriving compare, sexp]
 
 let to_string = function
   | Read_write -> "read write"

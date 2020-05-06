@@ -3,7 +3,7 @@ type t =
   | Repeatable_read
   | Read_committed
   | Read_uncommitted
-[@@deriving sexp]
+[@@deriving compare, sexp]
 
 let to_string = function
   | Serializable -> "serializable"

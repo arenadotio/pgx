@@ -1,6 +1,6 @@
 (** A wrapper for holding Postgres types *)
 module type S = sig
-  type t = string option [@@deriving sexp_of]
+  type t = string option [@@deriving compare, sexp_of]
 
   exception Conversion_failure of string [@@deriving sexp]
 
@@ -14,13 +14,13 @@ module type S = sig
   val to_float_exn : t -> float
   val to_float : t -> float option
 
-  type hstore = (string * string option) list [@@deriving sexp]
+  type hstore = (string * string option) list [@@deriving compare, sexp]
 
   val of_hstore : hstore -> t
   val to_hstore_exn : t -> hstore
   val to_hstore : t -> hstore option
 
-  type inet = Ipaddr.t * int [@@deriving sexp_of]
+  type inet = Ipaddr.t * int [@@deriving compare, sexp_of]
 
   val of_inet : inet -> t
   val to_inet_exn : t -> inet
@@ -38,7 +38,7 @@ module type S = sig
   val to_list_exn : t -> t list
   val to_list : t -> t list option
 
-  type point = float * float [@@deriving sexp]
+  type point = float * float [@@deriving compare, sexp]
 
   val of_point : point -> t
   val to_point_exn : t -> point
@@ -50,7 +50,7 @@ module type S = sig
   val to_unit_exn : t -> unit
   val to_unit : t -> unit option
 
-  type uuid = Uuidm.t [@@deriving sexp_of]
+  type uuid = Uuidm.t [@@deriving compare, sexp_of]
 
   val of_uuid : uuid -> t
   val to_uuid_exn : t -> uuid
