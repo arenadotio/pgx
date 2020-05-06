@@ -15,6 +15,8 @@
 (source
  (github arenadotio/pgx))
 
+(documentation "https://arenadotio.github.io/pgx")
+
 (package
  (name pgx)
  (synopsis "Pure-OCaml PostgreSQL client library")
