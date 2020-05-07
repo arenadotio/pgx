@@ -470,6 +470,120 @@ struct
                   |> Alcotest.(check string) "string contents" input;
                   Pgx.Value.to_int_exn length |> Alcotest.(check int) "string length" 512
                 | _ -> assert false))
+      ; Alcotest_io.test_case "UTF-8 partial round-trip 1" `Quick (fun () ->
+            (* Select a literal string *)
+            let expect = "test-ä-test" in
+            with_conn (fun db ->
+                simple_query
+                  db
+                  {|
+                    CREATE TEMPORARY TABLE this_test (id text);
+                    INSERT INTO this_test (id) VALUES ('test-ä-test')
+                  |}
+                >>= fun _ ->
+                execute db "SELECT id FROM this_test"
+                >>| function
+                | [ [ result ] ] ->
+                  Alcotest.(check (option string))
+                    ""
+                    (Some expect)
+                    (Pgx.Value.to_string result)
+                | _ -> assert false))
+      ; Alcotest_io.test_case "UTF-8 partial round-trip 1 with where" `Quick (fun () ->
+            (* Select a literal string *)
+            let expect = "test-ä-test" in
+            with_conn (fun db ->
+                simple_query
+                  db
+                  {|
+                  CREATE TEMPORARY TABLE this_test (id text);
+                  INSERT INTO this_test (id) VALUES ('test-ä-test')
+                |}
+                >>= fun _ ->
+                execute
+                  db
+                  ~params:[ Pgx.Value.of_string expect ]
+                  "SELECT id FROM this_test WHERE id = $1"
+                >>| function
+                | [ [ result ] ] ->
+                  Alcotest.(check (option string))
+                    ""
+                    (Some expect)
+                    (Pgx.Value.to_string result)
+                | [] -> Alcotest.fail "Expected one row but got zero"
+                | _ -> assert false))
+      ; Alcotest_io.test_case "UTF-8 partial round-trip 2" `Quick (fun () ->
+            (* Insert string as a param, then select back the contents of
+               the table *)
+            let expect = "test-ä-test" in
+            with_conn (fun db ->
+                simple_query db "CREATE TEMPORARY TABLE this_test (id text)"
+                >>= fun _ ->
+                execute
+                  db
+                  ~params:[ Pgx.Value.of_string expect ]
+                  "INSERT INTO this_test (id) VALUES ($1)"
+                >>= fun _ ->
+                execute db "SELECT id FROM this_test"
+                >>| function
+                | [ [ result ] ] ->
+                  Alcotest.(check (option string))
+                    ""
+                    (Some expect)
+                    (Pgx.Value.to_string result)
+                | _ -> assert false))
+      ; Alcotest_io.test_case "UTF-8 partial round-trip 3" `Quick (fun () ->
+            with_conn (fun db ->
+                simple_query
+                  db
+                  {|
+                    CREATE TEMPORARY TABLE this_test (id text);
+                    INSERT INTO this_test (id) VALUES('test-\303\244-test')
+                  |}
+                >>= fun _ ->
+                execute db "SELECT id FROM this_test"
+                >>| function
+                | [ [ result ] ] ->
+                  Alcotest.(check string)
+                    ""
+                    {|test-\303\244-test|}
+                    (Pgx.Value.to_string_exn result)
+                | _ -> assert false))
+      ; Alcotest_io.test_case "UTF-8 round-trip" `Quick (fun () ->
+            (* Select the contents of a param *)
+            let expect = "test-ä-test" in
+            with_conn (fun db ->
+                execute db ~params:[ Pgx.Value.of_string expect ] "SELECT $1::VARCHAR"
+                >>| function
+                | [ [ result ] ] ->
+                  Alcotest.(check (option string))
+                    ""
+                    (Some expect)
+                    (Pgx.Value.to_string result)
+                | _ -> assert false))
+      ; Alcotest_io.test_case "UTF-8 round-trip where" `Quick (fun () ->
+            (* Insert string as a param, then select back the contents of
+               the table using a WHERE *)
+            let expect = "test-ä-test" in
+            with_conn (fun db ->
+                simple_query db "CREATE TEMPORARY TABLE this_test (id text)"
+                >>= fun _ ->
+                execute
+                  db
+                  ~params:[ Pgx.Value.of_string expect ]
+                  "INSERT INTO this_test (id) VALUES ($1)"
+                >>= fun _ ->
+                execute
+                  db
+                  ~params:[ Pgx.Value.of_string expect ]
+                  "SELECT id FROM this_test WHERE id = $1"
+                >>| function
+                | [ [ result ] ] ->
+                  Alcotest.(check (option string))
+                    ""
+                    (Some expect)
+                    (Pgx.Value.to_string result)
+                | _ -> assert false))
       ]
     in
     if force_tests || have_pg_config
