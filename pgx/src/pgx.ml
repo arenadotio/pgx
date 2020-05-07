@@ -384,87 +384,6 @@ module Message_out = struct
   ;;
 end
 
-let is_first_oct_digit c = c >= '0' && c <= '3'
-let is_oct_digit c = c >= '0' && c <= '7'
-let oct_val c = Char.code c - 0x30
-
-let is_hex_digit = function
-  | '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' -> true
-  | _ -> false
-;;
-
-let hex_val c =
-  let offset =
-    match c with
-    | '0' .. '9' -> 0x30
-    | 'a' .. 'f' -> 0x57
-    | 'A' .. 'F' -> 0x37
-    | _ -> failwith "hex_val"
-  in
-  Char.code c - offset
-;;
-
-(* Deserialiser for the new 'hex' format introduced in PostgreSQL 9.0. *)
-let deserialize_hex str =
-  let len = String.length str in
-  let buf = Buffer.create ((len - 2) / 2) in
-  let i = ref 3 in
-  while !i < len do
-    let hi_nibble = str.[!i - 1] in
-    let lo_nibble = str.[!i] in
-    i := !i + 2;
-    if is_hex_digit hi_nibble && is_hex_digit lo_nibble
-    then (
-      let byte = (hex_val hi_nibble lsl 4) + hex_val lo_nibble in
-      Buffer.add_char buf (Char.chr byte))
-  done;
-  Buffer.contents buf
-;;
-
-(* Deserialiser for the old 'escape' format used in PostgreSQL < 9.0. *)
-let deserialize_string_escape str =
-  let len = String.length str in
-  let buf = Buffer.create len in
-  let i = ref 0 in
-  while !i < len do
-    let c = str.[!i] in
-    if c = '\\'
-    then (
-      incr i;
-      if !i < len && str.[!i] = '\\'
-      then (
-        Buffer.add_char buf '\\';
-        incr i)
-      else if !i + 2 < len
-              && is_first_oct_digit str.[!i]
-              && is_oct_digit str.[!i + 1]
-              && is_oct_digit str.[!i + 2]
-      then (
-        let byte = oct_val str.[!i] in
-        incr i;
-        let byte = (byte lsl 3) + oct_val str.[!i] in
-        incr i;
-        let byte = (byte lsl 3) + oct_val str.[!i] in
-        incr i;
-        Buffer.add_char buf (Char.chr byte)))
-    else (
-      incr i;
-      Buffer.add_char buf c)
-  done;
-  Buffer.contents buf
-;;
-
-(* PostgreSQL 9.0 introduced the new 'hex' format for binary data.
-   We must therefore check whether the data begins with a magic sequence
-   that identifies this new format and if so call the appropriate parser;
-   if it doesn't, then we invoke the parser for the old 'escape' format.
-*)
-let deserialize_string str =
-  if String.starts_with str "\\x"
-  then deserialize_hex str
-  else deserialize_string_escape str
-;;
-
 module Value = Pgx_value
 
 module type Io = Io_intf.S
@@ -866,23 +785,7 @@ module Make (Thread : Io) = struct
     ;;
 
     let execute_iter ?(portal = "") { name; conn } ~params ~f =
-      let encode_unprintable b =
-        let len = String.length b in
-        let buf = Buffer.create (len * 2) in
-        for i = 0 to len - 1 do
-          let c = b.[i] in
-          let cc = Char.code c in
-          if cc < 0x20 || cc > 0x7e
-          then Buffer.add_string buf (sprintf "\\%03o" cc) (* non-print -> \ooo *)
-          else if c = '\\'
-          then Buffer.add_string buf "\\\\" (* \ -> \\ *)
-          else Buffer.add_char buf c
-        done;
-        Buffer.contents buf
-      in
-      let params =
-        List.map (fun s -> Value.to_string s |> Option.map encode_unprintable) params
-      in
+      let params = List.map Value.to_string params in
       Sequencer.enqueue conn (fun conn ->
           send_message conn (Message_out.Bind { Message_out.portal; name; params })
           >>= fun () ->
@@ -907,11 +810,7 @@ module Make (Thread : Io) = struct
             | Message_in.CommandComplete _ -> loop ()
             | Message_in.EmptyQueryResponse -> loop ()
             | Message_in.DataRow fields ->
-              List.map
-                (Option.bind (fun v -> deserialize_string v |> Value.of_string))
-                fields
-              |> f
-              >>= loop
+              List.map (Option.bind Value.of_string) fields |> f >>= loop
             | Message_in.NoData -> loop ()
             | Message_in.ParameterStatus _ ->
               (* 43.2.6: ParameterStatus messages will be generated whenever
@@ -938,7 +837,7 @@ module Make (Thread : Io) = struct
                 fail_msg
                   "Pgx.iter_execute: CopyOutResponse for binary is not implemented yet")
             | Message_in.CopyData row ->
-              f [ row |> deserialize_string |> Value.of_string ] >>= fun () -> loop ()
+              f [ row |> Value.of_string ] >>= fun () -> loop ()
             | Message_in.CopyDone -> loop ()
             | m -> fail_msg "Pgx: unknown response message: %s" (Message_in.to_string m)
           in
@@ -1067,13 +966,10 @@ module Make (Thread : Io) = struct
           loop acc rows state
         | Message_in.Binary ->
           fail_msg "Pgx.query: CopyOutResponse for binary is not implemented yet")
-      | _, Message_in.CopyData row ->
-        loop acc ([ row |> deserialize_string |> Value.of_string ] :: rows) state
+      | _, Message_in.CopyData row -> loop acc ([ row |> Value.of_string ] :: rows) state
       | _, Message_in.CopyDone -> loop acc rows state
       | `Rows, Message_in.DataRow row ->
-        let row =
-          List.map (Option.bind (fun v -> deserialize_string v |> Value.of_string)) row
-        in
+        let row = List.map (Option.bind Value.of_string) row in
         loop acc (row :: rows) `Rows
       | (`Row_desc | `Rows), Message_in.CommandComplete _ ->
         let rows = List.rev rows in

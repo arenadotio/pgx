@@ -17,6 +17,32 @@ let required f = function
 let opt = Option.bind
 let null = None
 
+let of_binary b =
+  match b with
+  | "" -> Some ""
+  | _ ->
+    (try
+       let (`Hex hex) = Hex.of_string b in
+       Some ("\\x" ^ hex)
+     with
+    | _ -> convert_failure "binary" b)
+;;
+
+let to_binary' = function
+  | "" -> ""
+  | t ->
+    ((* Skip if not encoded as hex *)
+    try
+      if String.sub t 0 2 <> "\\x"
+      then t (* Decode if encoded as hex *)
+      else `Hex (String.sub t 2 (String.length t - 2)) |> Hex.to_string
+    with
+    | _ -> convert_failure "binary" t)
+;;
+
+let to_binary_exn = required to_binary'
+let to_binary = Option.map to_binary'
+
 let of_bool = function
   | true -> Some "t"
   | false -> Some "f"

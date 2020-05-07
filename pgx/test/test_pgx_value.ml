@@ -78,6 +78,14 @@ let () =
   Alcotest.run
     "Pgx.Value"
     [ make_test
+        "binary"
+        Alcotest.string
+        of_binary
+        to_binary
+        to_binary_exn
+        [ ""; "normal string"; "string with null\x00 in the midddle"; all_chars ]
+        []
+    ; make_test
         "bool"
         Alcotest.bool
         of_bool

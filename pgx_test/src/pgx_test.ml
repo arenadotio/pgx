@@ -368,12 +368,11 @@ struct
                    numeric);"
                 >>= fun _ ->
                 let expect_uuid = Uuidm.create `V4 in
-                let all_chars = String.init 255 char_of_int in
                 let params =
                   let open Pgx.Value in
                   [ of_uuid expect_uuid
                   ; of_int 12
-                  ; of_string all_chars
+                  ; of_string "asdf"
                   ; of_string "9223372036854775807"
                   ]
                 in
@@ -396,7 +395,7 @@ struct
                     (Some expect_uuid)
                     uuid;
                   Alcotest.(check (option int)) "int" (Some 12) int_;
-                  Alcotest.(check (option string)) "string" (Some all_chars) string_;
+                  Alcotest.(check (option string)) "string" (Some "asdf") string_;
                   Alcotest.(check (option string))
                     "numeric"
                     (Some "9223372036854775807")
@@ -406,21 +405,71 @@ struct
       ; Alcotest_io.test_case "binary string handling" `Quick (fun () ->
             let all_chars = String.init 255 char_of_int in
             with_conn (fun db ->
-                [ "SELECT decode($1, 'base64')", Base64.encode_exn all_chars, all_chars
+                [ ( "SELECT decode($1, 'base64')::bytea"
+                  , Base64.encode_exn all_chars |> Pgx.Value.of_string
+                  , Pgx.Value.to_binary_exn
+                  , all_chars )
                   (* Postgres adds whitespace to base64 encodings, so we strip it
                      back out *)
-                ; ( "SELECT regexp_replace(encode($1, 'base64'), '\\s', '', 'g')"
-                  , all_chars
+                ; ( "SELECT regexp_replace(encode($1::bytea, 'base64'), '\\s', '', 'g')"
+                  , Pgx.Value.of_binary all_chars
+                  , Pgx.Value.to_string_exn
                   , Base64.encode_exn all_chars )
                 ]
-                |> deferred_list_map ~f:(fun (query, param, expect) ->
-                       let params = [ param |> Pgx.Value.of_string ] in
+                |> deferred_list_map ~f:(fun (query, param, read_f, expect) ->
+                       let params = [ param ] in
                        execute ~params db query
                        >>| function
-                       | [ [ Some actual ] ] ->
-                         Alcotest.(check string) "binary string" expect actual
+                       | [ [ actual ] ] ->
+                         read_f actual |> Alcotest.(check string) "binary string" expect
                        | _ -> assert false))
             >>| List.iter (fun () -> ()))
+      ; Alcotest_io.test_case "binary string round-trip" `Quick (fun () ->
+            let all_chars = String.init 255 char_of_int in
+            with_conn (fun db ->
+                (* This binary string should get encoded as hex and stored as one byte-per-byte of input *)
+                let params = [ Pgx.Value.of_binary all_chars ] in
+                (* Checking here that Postgres doesn't throw an exception about null characters in input, since
+                   our encoded input has no null chars *)
+                execute ~params db "SELECT $1::bytea, octet_length($1::bytea)"
+                >>| function
+                | [ [ value; length ] ] ->
+                  Pgx.Value.to_binary_exn value
+                  |> Alcotest.(check string) "binary string contents" all_chars;
+                  (* Our string is 255 bytes so it should be stored as 255 bytes, not as 512 (the length of the
+                     encoded hex). What we're testing here is that we're actually storing binary, not hex
+                     encoded binary *)
+                  Pgx.Value.to_int_exn length
+                  |> Alcotest.(check int) "binary string length" 255
+                | _ -> assert false))
+      ; Alcotest_io.test_case "Non-binary literal hex string round-trip" `Quick (fun () ->
+            with_conn (fun db ->
+                (* This hex string should get inserted into the DB as literally "\x0001etc" *)
+                let input =
+                  "\\x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfe"
+                in
+                let params = [ Pgx.Value.of_string input ] in
+                execute ~params db "SELECT $1::varchar, octet_length($1::varchar)"
+                >>| function
+                | [ [ value; length ] ] ->
+                  Pgx.Value.to_string_exn value
+                  |> Alcotest.(check string) "string contents" input;
+                  Pgx.Value.to_int_exn length |> Alcotest.(check int) "string length" 512
+                | _ -> assert false))
+      ; Alcotest_io.test_case "Binary literal hex string round-trip" `Quick (fun () ->
+            with_conn (fun db ->
+                (* This hex string should get double encoded so it makes it into the DB as literally "\x0001etc" *)
+                let input =
+                  "\\x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfe"
+                in
+                let params = [ Pgx.Value.of_binary input ] in
+                execute ~params db "SELECT $1::bytea, octet_length($1::bytea)"
+                >>| function
+                | [ [ value; length ] ] ->
+                  Pgx.Value.to_binary_exn value
+                  |> Alcotest.(check string) "string contents" input;
+                  Pgx.Value.to_int_exn length |> Alcotest.(check int) "string length" 512
+                | _ -> assert false))
       ]
     in
     if force_tests || have_pg_config
