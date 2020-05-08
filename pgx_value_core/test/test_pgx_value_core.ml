@@ -1,7 +1,7 @@
 open Core_kernel
 module Value = Pgx_value_core
 
-let time_roundtrip str = Value.to_time_exn (Some str)
+let time_roundtrip str = Value.of_string str |> Value.to_time_exn
 let printer = Time.to_string_abs ~zone:Time.Zone.utc
 
 let time_testable =

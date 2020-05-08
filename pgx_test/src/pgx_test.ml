@@ -16,10 +16,17 @@ end
 
 module Alcotest_ext = struct
   let uuid = Alcotest.testable Uuidm.pp Uuidm.equal
+
+  let pgx_value =
+    Alcotest.testable
+      (fun fmt t ->
+        Pgx_value.sexp_of_t t |> Sexplib0.Sexp.to_string_hum |> Format.pp_print_string fmt)
+      (fun a b -> Pgx_value.compare a b = 0)
+  ;;
 end
 
-let check_result = Alcotest.(check (list (list (option string))))
-let check_results = Alcotest.(check (list (list (list (option string)))))
+let check_result = Alcotest.(check (list (list Alcotest_ext.pgx_value)))
+let check_results = Alcotest.(check (list (list (list Alcotest_ext.pgx_value))))
 
 module Make_tests
     (Pgx_impl : Pgx.S)
@@ -117,19 +124,24 @@ struct
       ; Alcotest_io.test_case "query - 1 query" `Quick (fun () ->
             with_conn (fun dbh ->
                 simple_query dbh "select 1"
-                >>| check_results "select 1" [ [ [ Some "1" ] ] ]))
+                >>| check_results "select 1" [ [ [ Pgx.Value.of_string "1" ] ] ]))
       ; Alcotest_io.test_case "query - multiple" `Quick (fun () ->
             with_conn (fun dbh ->
                 simple_query dbh "select 1; select 2; select 3"
                 >>| check_results
                       "select three"
-                      [ [ [ Some "1" ] ]; [ [ Some "2" ] ]; [ [ Some "3" ] ] ]))
+                      Pgx.Value.
+                        [ [ [ of_string "1" ] ]
+                        ; [ [ of_string "2" ] ]
+                        ; [ [ of_string "3" ] ]
+                        ]))
       ; Alcotest_io.test_case "query - multiple single query" `Quick (fun () ->
             with_conn (fun dbh ->
                 simple_query dbh "select 1 union all select 2 union all select 3"
                 >>| check_results
                       "select unit all"
-                      [ [ [ Some "1" ]; [ Some "2" ]; [ Some "3" ] ] ]))
+                      Pgx.Value.
+                        [ [ [ of_string "1" ]; [ of_string "2" ]; [ of_string "3" ] ] ]))
       ; Alcotest_io.test_case "query - empty" `Quick (fun () ->
             with_conn (fun dbh -> simple_query dbh "" >>| check_results "empty query" []))
       ; Alcotest_io.test_case
@@ -157,14 +169,16 @@ struct
                   execute_fold s ~params:[] ~init:[] ~f:(fun acc a -> return (a :: acc))))
             >>| check_result
                   "fold values"
-                  [ [ Some "3"; Some "4" ]; [ Some "1"; Some "2" ] ])
+                  Pgx.Value.
+                    [ [ of_string "3"; of_string "4" ]; [ of_string "1"; of_string "2" ] ])
       ; Alcotest_io.test_case "test execute_prepared" `Quick (fun () ->
             with_conn
             @@ fun dbh ->
             Prepared.(prepare dbh ~query:"values (1,2),(3,4)" >>= execute ~params:[])
             >>| check_result
                   "prepare & execute"
-                  [ [ Some "1"; Some "2" ]; [ Some "3"; Some "4" ] ])
+                  Pgx.Value.
+                    [ [ of_string "1"; of_string "2" ]; [ of_string "3"; of_string "4" ] ])
       ; Alcotest_io.test_case "test execute_iter" `Quick (fun () ->
             let n = ref 0 in
             let rows = Array.make 2 [] in
@@ -178,26 +192,27 @@ struct
             Array.to_list rows
             |> check_result
                  "execute_iter"
-                 [ [ Some "1"; Some "2" ]; [ Some "3"; Some "4" ] ])
+                 Pgx.Value.
+                   [ [ of_string "1"; of_string "2" ]; [ of_string "3"; of_string "4" ] ])
       ; Alcotest_io.test_case "with_prepare" `Quick (fun () ->
             with_conn
             @@ fun dbh ->
             let name = "with_prepare" in
             Prepared.(
               with_prepare dbh ~name ~query:"values ($1)" ~f:(fun s ->
-                  execute s ~params:[ Some "test" ]))
-            >>| check_result name [ [ Some "test" ] ])
+                  execute s ~params:Pgx.Value.[ of_string "test" ]))
+            >>| check_result name Pgx.Value.[ [ of_string "test" ] ])
       ; Alcotest_io.test_case "interleave unnamed prepares" `Quick (fun () ->
             with_conn
             @@ fun dbh ->
             let open Prepared in
             with_prepare dbh ~query:"values ($1)" ~f:(fun s1 ->
                 with_prepare dbh ~query:"values (1)" ~f:(fun s2 ->
-                    execute s1 ~params:[ Some "test" ]
+                    execute s1 ~params:Pgx.Value.[ of_string "test" ]
                     >>= fun r1 -> execute s2 ~params:[] >>| fun r2 -> r1, r2))
             >>| fun (r1, r2) ->
-            check_result "outer prepare" [ [ Some "test" ] ] r1;
-            check_result "inner prepare" [ [ Some "1" ] ] r2)
+            check_result "outer prepare" Pgx.Value.[ [ of_string "test" ] ] r1;
+            check_result "inner prepare" Pgx.Value.[ [ of_string "1" ] ] r2)
       ; Alcotest_io.test_case "in_transaction invariant" `Quick (fun () ->
             with_conn
             @@ fun dbh ->
@@ -224,12 +239,18 @@ struct
             | Error (Pgx.PostgreSQL_Error _) -> ()
             | Error exn -> reraise exn)
       ; Alcotest_io.test_case "execute_many function" `Quick (fun () ->
-            let params = [ [ Some "1" ]; [ Some "2" ]; [ Some "3" ] ] in
+            let params =
+              Pgx.Value.[ [ of_string "1" ]; [ of_string "2" ]; [ of_string "3" ] ]
+            in
             with_conn (fun dbh ->
                 execute_many dbh ~query:"select $1::int" ~params
                 >>| check_results
                       "execute_many result"
-                      [ [ [ Some "1" ] ]; [ [ Some "2" ] ]; [ [ Some "3" ] ] ]))
+                      Pgx.Value.
+                        [ [ [ of_string "1" ] ]
+                        ; [ [ of_string "2" ] ]
+                        ; [ [ of_string "3" ] ]
+                        ]))
       ; Alcotest_io.test_case "query with SET" `Quick (fun () ->
             with_conn (fun dbh ->
                 simple_query dbh "SET LOCAL TIME ZONE 'Europe/Rome'; SELECT 'x'"
@@ -261,10 +282,13 @@ struct
                    (DELIMITER '|')"
                 >>| check_results
                       "copy out result"
-                      [ []
-                      ; []
-                      ; [ [ Some "Roger Federer|19\n" ]; [ Some "Rafael Nadal|15\n" ] ]
-                      ]))
+                      Pgx.Value.
+                        [ []
+                        ; []
+                        ; [ [ of_string "Roger Federer|19\n" ]
+                          ; [ of_string "Rafael Nadal|15\n" ]
+                          ]
+                        ]))
       ; Alcotest_io.test_case "copy out extended query" `Quick (fun () ->
             with_temp_db (fun dbh ~db_name:_ ->
                 execute
@@ -279,7 +303,10 @@ struct
                 >>= fun _ -> execute dbh "COPY tennis_greats TO STDOUT (DELIMITER '|')")
             >>| check_result
                   "copy out extended result"
-                  [ [ Some "Roger Federer|19\n" ]; [ Some "Rafael Nadal|15\n" ] ])
+                  Pgx.Value.
+                    [ [ of_string "Roger Federer|19\n" ]
+                    ; [ of_string "Rafael Nadal|15\n" ]
+                    ])
       ; Alcotest_io.test_case "execute_prepared_iter and transact test" `Quick (fun () ->
             with_temp_db (fun dbh ~db_name:_ ->
                 with_transaction dbh (fun dbh ->
@@ -307,7 +334,7 @@ struct
                         >>= fun () -> return !acc))
                 >>| check_result
                       "prepare & transact result"
-                      [ [ Some "Roger Federer"; Some "19" ] ]))
+                      Pgx.Value.[ [ of_string "Roger Federer"; of_string "19" ] ]))
       ; Alcotest_io.test_case "commit while not in transaction" `Quick (fun () ->
             try_with (fun () ->
                 with_conn
@@ -354,12 +381,12 @@ struct
                     let acc = ref [] in
                     execute_iter
                       s
-                      ~params:[ Some "Andy Murray"; Some "3" ]
+                      ~params:Pgx.Value.[ of_string "Andy Murray"; of_string "3" ]
                       ~f:(fun fields -> return (acc := fields :: !acc))
                     >>= fun () -> return !acc)
                 >>| check_result
                       "isolation query result"
-                      [ [ Some "Andy Murray"; Some "3" ] ]))
+                      Pgx.Value.[ [ of_string "Andy Murray"; of_string "3" ] ]))
       ; Alcotest_io.test_case "multi typed table" `Quick (fun () ->
             with_temp_db (fun dbh ~db_name:_ ->
                 simple_query

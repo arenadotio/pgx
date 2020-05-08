@@ -18,7 +18,7 @@ let of_time t =
     2016-06-07 15:37:46Z (utc timezone) -> 2016-06-07 11:37:46-04
     2016-06-07 15:37:46-04 (local timezone) -> 2016-06-07 15:37:46-04
   *)
-  Some (Time.to_string_abs ~zone:Time.Zone.utc t)
+  Time.to_string_abs ~zone:Time.Zone.utc t |> Pgx.Value.of_string
 ;;
 
 let to_time' =
@@ -55,9 +55,9 @@ let to_time' =
     | _ -> convert_failure "time" s
 ;;
 
-let to_time_exn = required to_time'
-let to_time = Option.map ~f:to_time'
-let of_date d = Some (Date.to_string d)
+let to_time_exn v = Pgx.Value.to_string_exn v |> to_time'
+let to_time v = Pgx.Value.to_string v |> Option.map ~f:to_time'
+let of_date d = Date.to_string d |> Pgx.Value.of_string
 let to_date' = Date.of_string
-let to_date_exn = required to_date'
-let to_date = Option.map ~f:to_date'
+let to_date_exn v = Pgx.Value.to_string_exn v |> to_date'
+let to_date v = Pgx.Value.to_string v |> Option.map ~f:to_date'
