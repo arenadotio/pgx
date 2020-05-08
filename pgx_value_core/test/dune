@@ -1,3 +1,4 @@
 (tests
  (names test_pgx_value_core)
+ (package pgx_value_core)
  (libraries alcotest pgx_value_core))

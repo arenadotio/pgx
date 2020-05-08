@@ -1,3 +1,4 @@
 (test
  (name test_pgx_unix)
+ (package pgx_unix)
  (libraries pgx_test pgx_unix))

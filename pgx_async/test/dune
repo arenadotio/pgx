@@ -1,3 +1,4 @@
 (tests
  (names test_pgx_async)
+ (package pgx_async)
  (libraries alcotest alcotest-async pgx_async pgx_test))

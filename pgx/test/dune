@@ -1,3 +1,4 @@
 (tests
  (names test_error_response test_pgx_value)
- (libraries alcotest ipaddr pgx))
+ (libraries alcotest ipaddr pgx)
+ (package pgx))
