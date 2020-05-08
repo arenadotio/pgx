@@ -1,6 +1,12 @@
 (** A wrapper for holding Postgres types *)
 module type S = sig
-  type t = string option [@@deriving compare, sexp_of]
+  (** [v] is opaque because the exact contents depend on Postgres types, so you could have two [v]'s with the
+      same value but different internal data representation, for example if you did a [SELECT 'a'::bytea] vs
+      [SELECT 'a'::varchar], the internal representation will be different, but the actual data if you use
+      [to_binary] or [to_string] will be the same. *)
+  type v [@@deriving compare, sexp_of]
+
+  type t = v option [@@deriving compare, sexp_of]
 
   exception Conversion_failure of string [@@deriving sexp_of]
 

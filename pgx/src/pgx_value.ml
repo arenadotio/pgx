@@ -1,7 +1,8 @@
 open Sexplib0.Sexp_conv
 open Pgx_aux
 
-type t = string option [@@deriving compare, sexp_of]
+type v = string [@@deriving compare, sexp_of]
+type t = v option [@@deriving compare, sexp_of]
 
 exception Conversion_failure of string [@@deriving sexp_of]
 
