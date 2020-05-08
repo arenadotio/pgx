@@ -68,9 +68,11 @@ jobs:
           command: |
             opam install --deps-only -y pgx pgx_lwt pgx_lwt_mirage
             opam install mirage
+            sudo apt-get install -y libseccomp-dev
       - run:
           name: Configure mirage
-          command: cd unikernel && opam exec -- mirage configure -t spt
+          command: |
+            cd unikernel && opam exec -- mirage configure -t spt --no-depext
       - run:
           name: Install mirage deps
           command: cd unikernel && opam exec -- make depend
