@@ -1,7 +1,10 @@
-## 0.2 (2020-05-07)
+## 1.0 (2020-05-08)
 
 ### Breaking changes
 
+* Pgx_value.t is an opaque type now. Use `Pgx_value.of/to` converters. Note that these converters are _not_ equivalent
+  to the OCaml functions like `bool_of_string` or `float_of_string`, and that for bytea data, you need to use
+  `Pgx_value.of/to_binary`, not `Pgx_value.of/to_string`.
 * Pgx_lwt has been renamed Pgx_lwt_unix.
 * `Pgx.execute` now uses the unnamed prepare statement. In most cases this should not affect anything, but if you were
   relying on Pgx not internally using the unnamed prepared statement, you will need to fix your code. If you run into
@@ -10,15 +13,19 @@
 
 ### Added
 
+* `Pgx_value.of_binary` and `Pgx_value.to_binary` added for bytea data.
 * Add `execute_map` helper to Pgx
 * Add `execute_pipe` helper to Pgx_async
 * Add `execute_unit` helper to Pgx
 * Break out `Pgx_value_core` library, which will allow users of Pgx_unix and Pgx_lwt to use the `Core_kernel.Tim` and
   `Date` types. This is still included by default in Pgx_async.
 * Added Pgx_lwt_mirage
+* Pgx_value types now all implement `compare` and `sexp_of`
 
 ### Fixed
 
+* Pgx no longer assumes all strings are binary data. Strings must be valid varchar data in the database's encoding.
+  Use `Pgx_value.of/to_binary` with bytea columns if you want binary.
 * Use a tail-recursive `List.map` implementation
 * Use `Unix.getuid` + `Lwt_unix.getpwuid` instead of `Lwt.getlogin` for the default username, since `getlogin` fails
   in some cases.
