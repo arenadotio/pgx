@@ -11,6 +11,8 @@ module String : sig
 end
 
 module Option : sig
+  include module type of Option
+
   val equal : ?cmp:('a -> 'a -> bool) -> 'a option -> 'a option -> bool
   val map : ('a -> 'b) -> 'a option -> 'b option
   val bind : ('a -> 'b option) -> 'a option -> 'b option
@@ -25,7 +27,12 @@ module List : sig
   val map : ('a -> 'b) -> 'a list -> 'b list
 end
 
-(** Necessary for ppx_assert *)
-val compare_string : string -> string -> int
-
+(** Necessary for ppx_compare *)
 val compare_bool : bool -> bool -> int
+
+val compare_float : float -> float -> int
+val compare_int : int -> int -> int
+val compare_int32 : int32 -> int32 -> int
+val compare_list : ('a -> 'a -> int) -> 'a list -> 'a list -> int
+val compare_option : ('a -> 'a -> int) -> 'a option -> 'a option -> int
+val compare_string : string -> string -> int
