@@ -23,10 +23,7 @@ jobs:
             opam remote add default https://opam.ocaml.org
       - run:
           name: Pin packages
-          command: |
-            for p in *.opam; do
-              opam pin add -k path -y -n ${p%.opam}.dev .
-            done
+          command: ./pin_dev.sh
       - run:
           name: Install system dependencies
           command: opam depext -y `basename -s .opam *.opam | tr '\n' ' '`
