@@ -21,7 +21,7 @@ let required f = function
   | None -> raise (Conversion_failure "Expected not-null but got null")
 ;;
 
-let opt = Option.bind
+let opt f v = Option.bind v f
 let null = None
 
 let of_binary b =
@@ -100,7 +100,7 @@ let of_hstore hstore =
     in
     key_str ^ "=>" ^ value_str
   in
-  Some (String.join ", " (List.map string_of_mapping hstore))
+  Some (String.concat ", " (List.map string_of_mapping hstore))
 ;;
 
 let to_hstore' str =
