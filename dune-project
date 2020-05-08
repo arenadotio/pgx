@@ -27,10 +27,6 @@
    (and
     :with-test
     (>= 1.0.0)))
-  (base64
-   (and
-    :with-test
-    (>= 3.0.0)))
   (bisect_ppx
    (and
     :dev
@@ -64,6 +60,10 @@
    (and
     :with-test
     (>= 1.0.0)))
+  (base64
+   (and
+    :with-test
+    (>= 3.0.0)))
   (ocaml
    (>= 4.08))
   (pgx
@@ -82,6 +82,10 @@
    (>= "v0.13.0"))
   (async_unix
    (>= "v0.13.0"))
+  (base64
+   (and
+    :with-test
+    (>= 3.0.0)))
   (ocaml
    (>= 4.08))
   (pgx
@@ -94,10 +98,6 @@
  (synopsis "Pgx using Lwt for IO")
  (description "Pgx using Lwt for IO")
  (depends
-  (alcotest-lwt
-   (and
-    :with-test
-    (>= "1.0.0")))
   lwt
   logs
   (ocaml
@@ -114,6 +114,10 @@
    (and
     :with-test
     (>= "1.0.0")))
+  (base64
+   (and
+    :with-test
+    (>= 3.0.0)))
   lwt
   (ocaml
    (>= 4.08))
