@@ -706,9 +706,9 @@ module Make (Thread : Io) = struct
     catch (fun () -> ping conn >>= fun () -> return true) (fun _ -> return false)
   ;;
 
-  type param = string option [@@deriving sexp]
-  type result = string option [@@deriving sexp]
-  type row = result list [@@deriving sexp]
+  type param = Pgx_value.t [@@deriving compare, sexp_of]
+  type result = Pgx_value.t [@@deriving compare, sexp_of]
+  type row = result list [@@deriving compare, sexp_of]
 
   let flush_msg conn =
     send_message conn Message_out.Flush

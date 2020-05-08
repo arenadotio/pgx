@@ -12,5 +12,5 @@ let () = Jbuild_plugin.V1.send @@ {|
  (public_name pgx)
  (wrapped false)
  (libraries hex ipaddr uuidm re sexplib0)
- (preprocess (pps ppx_custom_printf ppx_sexp_conv |} ^ preprocess ^ {|)))
+ (preprocess (pps ppx_compare ppx_custom_printf ppx_sexp_conv |} ^ preprocess ^ {|)))
 |}

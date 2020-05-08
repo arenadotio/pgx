@@ -42,6 +42,8 @@
   (ocaml
    (>= 4.08))
   (odoc :with-doc)
+  (ppx_compare
+   (>= v0.13.0))
   (ppx_custom_printf
    (>= v0.13.0))
   (ppx_sexp_conv

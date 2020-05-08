@@ -1,9 +1,9 @@
 open Sexplib0.Sexp_conv
 open Pgx_aux
 
-type t = string option [@@deriving sexp_of]
+type t = string option [@@deriving compare, sexp_of]
 
-exception Conversion_failure of string [@@deriving sexp]
+exception Conversion_failure of string [@@deriving sexp_of]
 
 let convert_failure ?hint type_ s =
   let hint =
@@ -86,7 +86,7 @@ let to_float' t =
 let to_float_exn = required to_float'
 let to_float = Option.map to_float'
 
-type hstore = (string * string option) list [@@deriving sexp]
+type hstore = (string * string option) list [@@deriving compare, sexp_of]
 
 let of_hstore hstore =
   let string_of_quoted str = "\"" ^ str ^ "\"" in
@@ -150,7 +150,7 @@ let to_hstore' str =
 let to_hstore_exn = required to_hstore'
 let to_hstore = Option.map to_hstore'
 
-type inet = Ipaddr.t * int
+type inet = Ipaddr.t * int [@@deriving compare]
 
 let sexp_of_inet (addr, mask) = [%sexp_of: string * int] (Ipaddr.to_string addr, mask)
 
@@ -289,7 +289,7 @@ let to_list' str =
 let to_list_exn = required to_list'
 let to_list = Option.map to_list'
 
-type point = float * float [@@deriving sexp]
+type point = float * float [@@deriving compare, sexp_of]
 
 let of_point (x, y) =
   let x = of_float' x in
@@ -329,7 +329,7 @@ let to_unit' = function
 let to_unit_exn = required to_unit'
 let to_unit = Option.map to_unit'
 
-type uuid = Uuidm.t
+type uuid = Uuidm.t [@@deriving compare]
 
 let sexp_of_uuid u = Uuidm.to_string u |> sexp_of_string
 let of_uuid s = Some (Uuidm.to_string s)
