@@ -1,13 +1,9 @@
 [![CircleCI](https://circleci.com/gh/arenadotio/pgx.svg?style=shield)](https://circleci.com/gh/arenadotio/pgx)
 [![Coverage Status](https://coveralls.io/repos/github/arenadotio/pgx/badge.svg?branch=master)](https://coveralls.io/github/arenadotio/pgx?branch=master)
+[![Documentation](https://img.shields.io/badge/documentation-odoc-blue)](https://arenadotio.github.io/pgx/index.html)
 
 PGX is a pure-OCaml PostgreSQL client library, supporting Async, LWT, or
 synchronous operations.
-
-[API documentation](https://arenadotio.github.io/pgx/doc/)
-
-**This is an early release. The API is likely to change significantly before
-the 1.0 release.**
 
 This library focuses on correctness and safety, with features like:
 
@@ -20,6 +16,7 @@ This library focuses on correctness and safety, with features like:
  - `Pgx.Value` for parameters and returned data, encouraging people to use
    the built-in converters instead of trying to handle everything as a string.
  - Async and LWT support are built in, no need to write your own IO module.
+ - Mirage OS is supported via Pgx_lwt_mirage
 
 We also provide a relatively high-level interface, like `Pgx_async.execute_pipe`,
 which prepares a statement, executes it with the given parameters, returns an
@@ -31,7 +28,7 @@ Significant portions of the code come from [PG'Ocaml](http://pgocaml.forge.ocaml
 ## Setup
 
 ```
-opam pin add pgx https://github.com/arenadotio/pgx.git
+opam install pgx_async # or pgx_lwt_unix or pgx_unix or pgx_lwt_mirage
 ```
 
 ## Examples
