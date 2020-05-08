@@ -11,7 +11,6 @@ doc: "https://arenadotio.github.io/pgx"
 bug-reports: "https://github.com/arenadotio/pgx/issues"
 depends: [
   "alcotest" {with-test & >= "1.0.0"}
-  "base64" {with-test & >= "3.0.0"}
   "bisect_ppx" {dev & >= "2.0.0"}
   "dune" {>= "1.11"}
   "hex"
