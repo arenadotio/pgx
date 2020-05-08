@@ -57,6 +57,8 @@
  (name pgx_unix)
  (synopsis
    "PGX using the standard library's Unix module for IO (synchronous)")
+ (description
+   "PGX using the standard library's Unix module for IO (synchronous)")
  (depends
   (ocaml
    (>= 4.08))
@@ -66,6 +68,7 @@
 (package
  (name pgx_async)
  (synopsis "Pgx using Async for IO")
+ (description "Pgx using Async for IO")
  (depends
   (alcotest-async
    (and
@@ -85,6 +88,7 @@
 (package
  (name pgx_lwt)
  (synopsis "Pgx using Lwt for IO")
+ (description "Pgx using Lwt for IO")
  (depends
   (alcotest-lwt
    (and
@@ -99,7 +103,8 @@
 
 (package
  (name pgx_lwt_unix)
- (synopsis "Pgx using Lwt for IO")
+ (synopsis "Pgx using Lwt and Unix libraries for IO")
+ (description "Pgx using Lwt and Unix libraries for IO")
  (depends
   (alcotest-lwt
    (and
@@ -116,6 +121,7 @@
 (package
  (name pgx_value_core)
  (synopsis "Pgx_value converters for Core types like Date and Time")
+ (description "Pgx_value converters for Core types like Date and Time")
  (depends
   (core_kernel
    (>= "v0.13.0"))
@@ -126,7 +132,8 @@
 
 (package
  (name pgx_lwt_mirage)
- (synopsis "Pgx using Lwt for IO")
+ (synopsis "Pgx using Lwt on Mirage for IO")
+ (description "Pgx using Lwt on Mirage for IO")
  (depends
   lwt
   (ocaml
