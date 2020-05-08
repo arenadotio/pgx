@@ -44,9 +44,11 @@ let make_test name typ to_value of_value of_value_exn values fail_values =
            let value = of_string str in
            Alcotest.test_case test_name `Quick
            @@ fun () ->
-           let msg = sprintf "Unable to convert to %s: %s" name str in
-           Alcotest.check_raises "conversion error" (Conversion_failure msg) (fun () ->
-               ignore (of_value value)))
+           try
+             of_value value |> ignore;
+             Alcotest.fail "Expected Conversion_failure"
+           with
+           | Conversion_failure _ -> ())
          fail_values
   in
   let success_opt_tests =
@@ -78,6 +80,14 @@ let () =
   Alcotest.run
     "Pgx.Value"
     [ make_test
+        "binary"
+        Alcotest.string
+        of_binary
+        to_binary
+        to_binary_exn
+        [ ""; "normal string"; "string with null\x00 in the midddle"; all_chars ]
+        []
+    ; make_test
         "bool"
         Alcotest.bool
         of_bool

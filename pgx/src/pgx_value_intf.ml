@@ -7,6 +7,9 @@ module type S = sig
   val required : ('a -> 'b) -> 'a option -> 'b
   val opt : ('a -> t) -> 'a option -> t
   val null : t
+  val of_binary : string -> t
+  val to_binary_exn : t -> string
+  val to_binary : t -> string option
   val of_bool : bool -> t
   val to_bool_exn : t -> bool
   val to_bool : t -> bool option

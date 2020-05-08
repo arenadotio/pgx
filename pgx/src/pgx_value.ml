@@ -5,8 +5,14 @@ type t = string option [@@deriving sexp_of]
 
 exception Conversion_failure of string [@@deriving sexp]
 
-let convert_failure type_ s =
-  Conversion_failure (Printf.sprintf "Unable to convert to %s: %s" type_ s) |> raise
+let convert_failure ?hint type_ s =
+  let hint =
+    match hint with
+    | None -> ""
+    | Some hint -> Printf.sprintf " (%s)" hint
+  in
+  Conversion_failure (Printf.sprintf "Unable to convert to %s%s: %s" type_ hint s)
+  |> raise
 ;;
 
 let required f = function
@@ -16,6 +22,32 @@ let required f = function
 
 let opt = Option.bind
 let null = None
+
+let of_binary b =
+  match b with
+  | "" -> Some ""
+  | _ ->
+    (try
+       let (`Hex hex) = Hex.of_string b in
+       Some ("\\x" ^ hex)
+     with
+    | exn -> convert_failure ~hint:(Printexc.to_string exn) "binary" b)
+;;
+
+let to_binary' = function
+  | "" -> ""
+  | t ->
+    ((* Skip if not encoded as hex *)
+    try
+      if String.sub t 0 2 <> "\\x"
+      then t (* Decode if encoded as hex *)
+      else `Hex (String.sub t 2 (String.length t - 2)) |> Hex.to_string
+    with
+    | exn -> convert_failure ~hint:(Printexc.to_string exn) "binary" t)
+;;
+
+let to_binary_exn = required to_binary'
+let to_binary = Option.map to_binary'
 
 let of_bool = function
   | true -> Some "t"
@@ -48,7 +80,7 @@ let to_float' t =
   | "nan" -> nan
   | _ ->
     (try float_of_string t with
-    | Failure _ -> convert_failure "float" t)
+    | Failure hint -> convert_failure ~hint "float" t)
 ;;
 
 let to_float_exn = required to_float'
@@ -159,7 +191,7 @@ let to_inet' =
       then addr, if Re.Group.get subs 2 = "." then 32 else 128
       else addr, int_of_string mask
     with
-    | _ -> convert_failure "inet" str
+    | exn -> convert_failure ~hint:(Printexc.to_string exn) "inet" str
 ;;
 
 let to_inet_exn = required to_inet'
@@ -168,7 +200,7 @@ let of_int i = Some (string_of_int i)
 
 let to_int' t =
   try int_of_string t with
-  | Failure _ -> convert_failure "int" t
+  | Failure hint -> convert_failure ~hint "int" t
 ;;
 
 let to_int_exn = required to_int'
@@ -177,7 +209,7 @@ let of_int32 i = Some (Int32.to_string i)
 
 let to_int32' t =
   try Int32.of_string t with
-  | Failure _ -> convert_failure "int32" t
+  | Failure hint -> convert_failure ~hint "int32" t
 ;;
 
 let to_int32_exn = required to_int32'
@@ -186,7 +218,7 @@ let of_int64 i = Some (Int64.to_string i)
 
 let to_int64' t =
   try Int64.of_string t with
-  | Failure _ -> convert_failure "int64" t
+  | Failure hint -> convert_failure ~hint "int64" t
 ;;
 
 let to_int64_exn = required to_int64'
@@ -279,9 +311,7 @@ let to_point' =
       let subs = Re.exec point_re str in
       float_of_string (Re.Group.get subs 1), float_of_string (Re.Group.get subs 2)
     with
-    | e ->
-      Printexc.to_string e |> print_endline;
-      convert_failure "point" str
+    | exn -> convert_failure ~hint:(Printexc.to_string exn) "point" str
 ;;
 
 let to_point_exn = required to_point'
