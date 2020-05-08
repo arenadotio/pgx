@@ -60,6 +60,10 @@
  (description
    "PGX using the standard library's Unix module for IO (synchronous)")
  (depends
+  (alcotest
+   (and
+    :with-test
+    (>= 1.0.0)))
   (ocaml
    (>= 4.08))
   (pgx
@@ -123,6 +127,10 @@
  (synopsis "Pgx_value converters for Core types like Date and Time")
  (description "Pgx_value converters for Core types like Date and Time")
  (depends
+  (alcotest
+   (and
+    :with-test
+    (>= 1.0.0)))
   (core_kernel
    (>= "v0.13.0"))
   (ocaml
