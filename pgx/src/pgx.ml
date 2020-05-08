@@ -810,7 +810,7 @@ module Make (Thread : Io) = struct
             | Message_in.CommandComplete _ -> loop ()
             | Message_in.EmptyQueryResponse -> loop ()
             | Message_in.DataRow fields ->
-              List.map (Option.bind Value.of_string) fields |> f >>= loop
+              List.map (fun v -> Option.bind v Value.of_string) fields |> f >>= loop
             | Message_in.NoData -> loop ()
             | Message_in.ParameterStatus _ ->
               (* 43.2.6: ParameterStatus messages will be generated whenever
@@ -969,7 +969,7 @@ module Make (Thread : Io) = struct
       | _, Message_in.CopyData row -> loop acc ([ row |> Value.of_string ] :: rows) state
       | _, Message_in.CopyDone -> loop acc rows state
       | `Rows, Message_in.DataRow row ->
-        let row = List.map (Option.bind Value.of_string) row in
+        let row = List.map (fun v -> Option.bind v Value.of_string) row in
         loop acc (row :: rows) `Rows
       | (`Row_desc | `Rows), Message_in.CommandComplete _ ->
         let rows = List.rev rows in
