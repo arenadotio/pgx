@@ -47,11 +47,11 @@ let server =
       ; Key.abstract database
       ]
     ~packages
-    (random @-> pclock @-> mclock @-> stackv4 @-> job)
+    (random @-> time @-> pclock @-> mclock @-> stackv4 @-> job)
 ;;
 
 let () =
   register
     "pgx_unikernel"
-    [ server $ default_random $ default_posix_clock $ default_monotonic_clock $ stack ]
+    [ server $ default_random $ default_time $ default_posix_clock $ default_monotonic_clock $ stack ]
 ;;
