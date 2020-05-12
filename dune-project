@@ -152,9 +152,10 @@
    (>= 4.08))
   logs
   mirage-channel
-  conduit-mirage
+  (conduit-mirage (>= 2.2.0))
   dns-client
   mirage-random
+  mirage-time
   mirage-clock
   mirage-stack
   (pgx

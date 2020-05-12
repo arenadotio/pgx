@@ -80,10 +80,11 @@ end
 
 module Make
     (RANDOM : Mirage_random.S)
+    (TIME : Mirage_time.S)
     (MCLOCK : Mirage_clock.MCLOCK)
     (STACK : Mirage_stack.V4) =
 struct
-  module Dns = Dns_client_mirage.Make (RANDOM) (MCLOCK) (STACK)
+  module Dns = Dns_client_mirage.Make (RANDOM) (TIME) (MCLOCK) (STACK)
 
   type sockaddr = Thread.sockaddr =
     | Unix of string
