@@ -31,16 +31,15 @@ jobs:
           name: Install OCaml dependencies
           command: opam install --deps-only -y `basename -s .opam *.opam | tr '\n' ' '`
       - run:
+          name: Build
+          command: opam exec -- make
+      - run:
           # This is a separate step so we don't run tests for all of these ^
           name: Install OCaml test dependencies
           command: opam install --deps-only -t -y `basename -s .opam *.opam | tr '\n' ' '`
       - run:
-          name: Build
-          command: opam config exec -- make
-      - run:
           name: Test and coverage report
-          command: |
-            opam config exec -- make coverage
+          command: opam exec -- make coverage
 
   dune_lint:
     docker:
