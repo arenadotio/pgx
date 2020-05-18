@@ -1071,14 +1071,40 @@ module Make (Thread : Io) = struct
         simple_query' conn "rollback" >>| fun _ -> conn.in_transaction <- false)
   ;;
 
-  let with_transaction ?isolation ?access ?deferrable conn f =
-    begin_work ?isolation ?access ?deferrable conn
-    >>= fun conn ->
-    catch
-      (fun () -> f conn >>= fun r -> commit conn >>= fun () -> return r)
-      (fun e ->
-        let backtrace = Printexc.get_raw_backtrace () in
-        rollback conn >>= fun () -> Printexc.raise_with_backtrace e backtrace)
+  let with_transaction ?isolation ?access ?deferrable seq f =
+    Sequencer.enqueue seq (fun ({ in_transaction } as conn) ->
+        (* Make a sub-sequencer for the transaction so commands outside the transaction have to wait
+           for this one, but inside the transaction anything with the handle can continue *)
+        let conn = Sequencer.create conn in
+        if in_transaction
+        then (
+          (match isolation, access, deferrable with
+          | Some _, _, _ | _, Some _, _ | _, _, Some _ ->
+            invalid_arg
+              "with_transaction: can't set isolation, access, or deferrable in \
+               sub-transaction"
+          | _ -> ());
+          let savepoint_name = sprintf "pgx_%Ld" (Random.int64 Int64.max_int) in
+          simple_query conn (sprintf "SAVEPOINT %s" savepoint_name)
+          >>= fun _ ->
+          catch
+            (fun () ->
+              f conn
+              >>= fun r ->
+              simple_query conn (sprintf "RELEASE SAVEPOINT %s" savepoint_name)
+              >>| fun _ -> r)
+            (fun e ->
+              let backtrace = Printexc.get_raw_backtrace () in
+              simple_query conn (sprintf "ROLLBACK TO SAVEPOINT %s" savepoint_name)
+              >>= fun _ -> Printexc.raise_with_backtrace e backtrace))
+        else
+          begin_work ?isolation ?access ?deferrable conn
+          >>= fun conn ->
+          catch
+            (fun () -> f conn >>= fun r -> commit conn >>= fun () -> return r)
+            (fun e ->
+              let backtrace = Printexc.get_raw_backtrace () in
+              rollback conn >>= fun () -> Printexc.raise_with_backtrace e backtrace))
   ;;
 
   let execute_many conn ~query ~params =
