@@ -1071,14 +1071,18 @@ module Make (Thread : Io) = struct
         simple_query' conn "rollback" >>| fun _ -> conn.in_transaction <- false)
   ;;
 
-  let with_transaction ?isolation ?access ?deferrable conn f =
-    begin_work ?isolation ?access ?deferrable conn
-    >>= fun conn ->
-    catch
-      (fun () -> f conn >>= fun r -> commit conn >>= fun () -> return r)
-      (fun e ->
-        let backtrace = Printexc.get_raw_backtrace () in
-        rollback conn >>= fun () -> Printexc.raise_with_backtrace e backtrace)
+  let with_transaction ?isolation ?access ?deferrable seq f =
+    Sequencer.enqueue seq (fun ({ in_transaction } as conn) ->
+        (* Make a sub-sequencer for the transaction so commands outside the transaction have to wait
+           for this one, but inside the transaction anything with the handle can continue *)
+        let conn = Sequencer.create conn in
+        begin_work ?isolation ?access ?deferrable conn
+        >>= fun conn ->
+        catch
+          (fun () -> f conn >>= fun r -> commit conn >>= fun () -> return r)
+          (fun e ->
+            let backtrace = Printexc.get_raw_backtrace () in
+            rollback conn >>= fun () -> Printexc.raise_with_backtrace e backtrace))
   ;;
 
   let execute_many conn ~query ~params =
