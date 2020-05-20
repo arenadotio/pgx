@@ -39,7 +39,11 @@ jobs:
           command: opam install --deps-only -t -y `basename -s .opam *.opam | tr '\n' ' '`
       - run:
           name: Test and coverage report
-          command: opam exec -- make coverage
+          command: |
+            coverage_set () [[ -n $COVERALLS_REPO_TOKEN ]]
+            opam exec -- make test-coverage
+            (coverage_set && opam exec -- bisect-ppx-report send-to Coveralls) || true
+
 
   dune_lint:
     docker:

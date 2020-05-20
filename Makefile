@@ -15,4 +15,7 @@ coverage: clean
 test:
 	@dune runtest --force -p $(PACKAGES)
 
+test-coverage:
+	@BISECT_ENABLE=yes dune runtest -p $(PACKAGES)
+
 .PHONY: all build clean coverage test
