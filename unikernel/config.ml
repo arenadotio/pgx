@@ -53,5 +53,11 @@ let server =
 let () =
   register
     "pgx_unikernel"
-    [ server $ default_random $ default_time $ default_posix_clock $ default_monotonic_clock $ stack ]
+    [ server
+      $ default_random
+      $ default_time
+      $ default_posix_clock
+      $ default_monotonic_clock
+      $ stack
+    ]
 ;;
