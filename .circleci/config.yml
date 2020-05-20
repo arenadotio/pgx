@@ -39,7 +39,14 @@ jobs:
           command: opam install --deps-only -t -y `basename -s .opam *.opam | tr '\n' ' '`
       - run:
           name: Test and coverage report
-          command: opam exec -- make coverage
+          # command: opam exec -- make coverage
+          command: |
+            if [[ -z "COVERALLS_REPO_TOKEN" ]]
+              echo "coveralls token is missing. Skipping upload to coveralls."
+              opam exec -- make test
+            else
+              opam exec -- make coverage
+            fi
 
   dune_lint:
     docker:
