@@ -20,8 +20,8 @@ module Alcotest_ext = struct
   let pgx_value =
     Alcotest.testable
       (fun fmt t ->
-        Pgx_value.sexp_of_t t |> Sexplib0.Sexp.to_string_hum |> Format.pp_print_string fmt)
-      (fun a b -> Pgx_value.compare a b = 0)
+        Pgx.Value.sexp_of_t t |> Sexplib0.Sexp.to_string_hum |> Format.pp_print_string fmt)
+      (fun a b -> Pgx.Value.compare a b = 0)
   ;;
 end
 

@@ -1,4 +1,4 @@
-open Error_response
+open Pgx.Error_response
 
 let tests =
   let info_msg =
