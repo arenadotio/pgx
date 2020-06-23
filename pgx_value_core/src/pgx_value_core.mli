@@ -1,10 +1,10 @@
 (** Pgx_value types using Core_kernel's Date and Time modules *)
 open Core_kernel
 
-type v = Pgx_value.v [@@deriving compare, sexp_of]
-type t = Pgx_value.t [@@deriving compare, sexp_of]
+type v = Pgx.Value.v [@@deriving compare, sexp_of]
+type t = Pgx.Value.t [@@deriving compare, sexp_of]
 
-include Pgx_value_intf.S with type v := v and type t := t
+include module type of Pgx.Value with type v := v and type t := t
 
 val of_date : Date.t -> t
 val to_date_exn : t -> Date.t
