@@ -641,7 +641,8 @@ module Make (Thread : Io) = struct
         loop (Some (Message_out.Password password))
       | Message_in.AuthenticationSCMCredential ->
         fail_msg "Pgx: SCM Credential authentication not supported"
-      | Message_in.ErrorResponse err -> pg_error ~conn err
+      | Message_in.ErrorResponse err ->
+        raise (PostgreSQL_Error ("Failed to authenticate with postgres server", err))
       | Message_in.NoticeResponse _ ->
         (* XXX Do or print something here? *)
         loop None
