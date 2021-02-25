@@ -152,7 +152,10 @@
    (>= 4.08))
   logs
   mirage-channel
-  (conduit-mirage (>= 2.2.0))
+  (conduit-mirage
+   (and
+    (>= 2.2.0)
+    (< 2.3.0)))
   dns-client
   mirage-random
   mirage-time
