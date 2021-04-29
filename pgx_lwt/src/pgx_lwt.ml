@@ -47,6 +47,7 @@ module Thread = struct
 
     let close_in = Io.close_in
     let open_connection = Io.open_connection
+    let upgrade_ssl = `Not_supported
     let getlogin = Io.getlogin
     let debug s = Logs_lwt.debug (fun m -> m "%s" s)
     let protect f ~finally = Lwt.finalize f finally
