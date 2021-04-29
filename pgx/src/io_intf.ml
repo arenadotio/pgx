@@ -14,6 +14,7 @@ module type S = sig
     | Inet of string * int
 
   val open_connection : sockaddr -> (in_channel * out_channel) t
+  val upgrade_ssl : in_channel -> out_channel -> (in_channel * out_channel) t
   val output_char : out_channel -> char -> unit t
   val output_binary_int : out_channel -> int -> unit t
   val output_string : out_channel -> string -> unit t

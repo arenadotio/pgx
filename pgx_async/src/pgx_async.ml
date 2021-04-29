@@ -73,20 +73,18 @@ module Thread = struct
   let close_in = Reader.close
 
   let open_connection sockaddr =
-    let get_reader_writer socket =
-      let fd = Socket.fd socket in
-      Reader.create fd, Writer.create fd
-    in
     match sockaddr with
-    | Unix path ->
-      let unix_sockaddr = Tcp.Where_to_connect.of_unix_address (`Unix path) in
-      Tcp.connect_sock unix_sockaddr >>| get_reader_writer
+    | Unix path -> Conduit_async.connect (`Unix_domain_socket path)
     | Inet (host, port) ->
-      let inet_sockaddr =
-        Tcp.Where_to_connect.of_host_and_port (Host_and_port.create ~host ~port)
-      in
-      Tcp.connect_sock inet_sockaddr >>| get_reader_writer
+      Uri.make ~host ~port ()
+      |> Conduit_async.V3.resolve_uri
+      >>= Conduit_async.V3.connect
+      >>| fun (_socket, in_channel, out_channel) -> in_channel, out_channel
   ;;
+
+  let upgrade_ssl in_channel out_channel =
+    let config = Conduit_async.V1.Conduit_async_ssl.Ssl_config.configure () in
+    Conduit_async.V1.Conduit_async_ssl.ssl_connect config in_channel out_channel
 
   (* The unix getlogin syscall can fail *)
   let getlogin () = Unix.getuid () |> Unix.Passwd.getbyuid_exn >>| fun { name; _ } -> name

@@ -288,6 +288,7 @@ module Message_out = struct
     | Describe_portal of portal (* DP *)
     | Startup_message of startup
     | Simple_query of query
+    | SSLRequest
   [@@deriving sexp]
 
   let add_byte buf i =
@@ -381,6 +382,10 @@ module Message_out = struct
       add_byte msg 0;
       None, Buffer.contents msg
     | Simple_query q -> Some 'Q', str q
+    | SSLRequest ->
+      let msg = Buffer.create 8 in
+      add_int32 msg 80877103l;
+      None, Buffer.contents msg
   ;;
 end
 
@@ -526,6 +531,21 @@ module Make (Thread : Io) = struct
 
   (*----- Connection. -----*)
 
+  let attempt_tls_upgrade ({ ichan ; chan ; _ } as conn) =
+    let msg = Message_out.SSLRequest in
+    send_message conn msg
+    >>= fun () ->
+    flush chan
+    >>= fun () ->
+    input_char ichan
+    >>= (function
+    | 'S' ->
+      upgrade_ssl ichan chan
+      >>= fun (ichan, chan) ->
+      return { conn with ichan ; chan }
+    | 'N' -> return conn
+    | _c -> assert false)
+
   let connect
       ?host
       ?port
@@ -600,6 +620,8 @@ module Make (Thread : Io) = struct
       ; prepared_num = Int64.of_int 0
       }
     in
+    attempt_tls_upgrade conn
+    >>= fun conn ->
     (* Send the StartUpMessage.  NB. At present we do not support SSL. *)
     let msg = Message_out.Startup_message { Message_out.user; database } in
     (* Loop around here until the database gives a ReadyForQuery message. *)

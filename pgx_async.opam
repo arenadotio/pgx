@@ -12,8 +12,10 @@ depends: [
   "dune" {>= "1.11"}
   "alcotest-async" {with-test & >= "1.0.0"}
   "async_kernel" {>= "v0.13.0"}
+  "async_ssl"
   "async_unix" {>= "v0.13.0"}
   "base64" {with-test & >= "3.0.0"}
+  "conduit-async"
   "ocaml" {>= "4.08"}
   "pgx" {= version}
   "pgx_value_core" {= version}
