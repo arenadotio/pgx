@@ -532,6 +532,14 @@ module Make (Thread : Io) = struct
   (*----- Connection. -----*)
 
   let attempt_tls_upgrade ({ ichan ; chan ; _ } as conn) =
+    (* To initiate an SSL-encrypted connection, the frontend initially sends an SSLRequest message rather than a
+       StartupMessage. The server then responds with a single byte containing S or N, indicating that it is willing
+       or unwilling to perform SSL, respectively. The frontend might close the connection at this point if it is
+        dissatisfied with the response. To continue after S, perform an SSL startup handshake (not described here,
+       part of the SSL specification) with the server. If this is successful, continue with sending the usual
+       StartupMessage. In this case the StartupMessage and all subsequent data will be SSL-encrypted. To continue
+       after N, send the usual StartupMessage and proceed without encryption.
+       See https://www.postgresql.org/docs/9.3/protocol-flow.html#AEN100021 *)
     let msg = Message_out.SSLRequest in
     send_message conn msg
     >>= fun () ->
