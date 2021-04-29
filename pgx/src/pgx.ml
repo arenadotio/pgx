@@ -540,19 +540,26 @@ module Make (Thread : Io) = struct
        StartupMessage. In this case the StartupMessage and all subsequent data will be SSL-encrypted. To continue
        after N, send the usual StartupMessage and proceed without encryption.
        See https://www.postgresql.org/docs/9.3/protocol-flow.html#AEN100021 *)
-    let msg = Message_out.SSLRequest in
-    send_message conn msg
-    >>= fun () ->
-    flush chan
-    >>= fun () ->
-    input_char ichan
-    >>= (function
-    | 'S' ->
-      upgrade_ssl ichan chan
-      >>= fun (ichan, chan) ->
-      return { conn with ichan ; chan }
-    | 'N' -> return conn
-    | _c -> assert false)
+    match Io.upgrade_ssl with
+    | `Not_supported -> return conn
+    | `Supported upgrade_ssl ->
+      Stdlib.print_string "Attempting STARTLS\n";
+      let msg = Message_out.SSLRequest in
+      send_message conn msg
+      >>= fun () ->
+      flush chan
+      >>= fun () ->
+      input_char ichan
+      >>= (function
+      | 'S' ->
+        Stdlib.print_string "Upgrading to TLS\n";
+        upgrade_ssl ichan chan
+        >>= fun (ichan, chan) ->
+        return { conn with ichan ; chan }
+      | 'N' ->
+        Stdlib.print_string "Not upgrading\n";
+        return conn
+      | _c -> assert false)
 
   let connect
       ?host
@@ -603,6 +610,7 @@ module Make (Thread : Io) = struct
         (try Inet (Sys.getenv "PGHOST", port) with
         | Not_found ->
           (* use Unix domain socket. *)
+          Stdlib.print_string "Using Unix socket\n";
           let path = sprintf "%s/.s.PGSQL.%d" unix_domain_socket_dir port in
           Unix path)
     in

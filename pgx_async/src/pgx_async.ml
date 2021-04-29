@@ -82,9 +82,15 @@ module Thread = struct
       >>| fun (_socket, in_channel, out_channel) -> in_channel, out_channel
   ;;
 
-  let upgrade_ssl in_channel out_channel =
-    let config = Conduit_async.V1.Conduit_async_ssl.Ssl_config.configure () in
-    Conduit_async.V1.Conduit_async_ssl.ssl_connect config in_channel out_channel
+  let upgrade_ssl =
+    try
+      let config = Conduit_async.V1.Conduit_async_ssl.Ssl_config.configure () in
+      Stdlib.print_string "TLS supported\n";
+      `Supported (fun in_channel out_channel ->
+        Conduit_async.V1.Conduit_async_ssl.ssl_connect config in_channel out_channel)
+    with _ ->
+      Stdlib.print_string "TLS not supported\n";
+      `Not_supported
 
   (* The unix getlogin syscall can fail *)
   let getlogin () = Unix.getuid () |> Unix.Passwd.getbyuid_exn >>| fun { name; _ } -> name
