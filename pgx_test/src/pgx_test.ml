@@ -1,7 +1,7 @@
 external reraise : exn -> _ = "%reraise"
 
 module type S = sig
-  val run_tests : unit -> unit
+  val run_tests : library_name:string -> unit
 end
 
 module type ALCOTEST_IO = sig
@@ -110,7 +110,7 @@ struct
     output_list 0
   ;;
 
-  let run_tests () =
+  let run_tests ~library_name =
     Random.self_init ();
     set_to_default_db ();
     let tests =
@@ -614,7 +614,7 @@ struct
       ]
     in
     if force_tests || have_pg_config
-    then Alcotest_io.run "pgx_test" [ "pgx_async", tests ]
+    then Alcotest_io.run "pgx_test" [ library_name, tests ]
     else print_endline "Skipping PostgreSQL tests since PGUSER is unset."
   ;;
 end
