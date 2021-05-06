@@ -7,7 +7,8 @@ include Pgx.S with type 'a Io.t = 'a Deferred.t
 module Thread : Pgx.Io with type 'a t = 'a Deferred.t
 
 val with_conn
-  :  ?host:string
+  :  ?ssl:[ `Auto | `No | `Always of Io.ssl_config ]
+  -> ?host:string
   -> ?port:int
   -> ?user:string
   -> ?password:string

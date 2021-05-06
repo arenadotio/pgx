@@ -82,15 +82,20 @@ module Thread = struct
       >>| fun (_socket, in_channel, out_channel) -> in_channel, out_channel
   ;;
 
+  type ssl_config = Conduit_async.Ssl.config
+
   let upgrade_ssl =
     try
-      let config = Conduit_async.V1.Conduit_async_ssl.Ssl_config.configure () in
+      let default_config = Conduit_async.V1.Conduit_async_ssl.Ssl_config.configure () in
       Stdlib.print_string "TLS supported\n";
-      `Supported (fun in_channel out_channel ->
-        Conduit_async.V1.Conduit_async_ssl.ssl_connect config in_channel out_channel)
-    with _ ->
+      `Supported
+        (fun ?(ssl_config = default_config) in_channel out_channel ->
+          Conduit_async.V1.Conduit_async_ssl.ssl_connect ssl_config in_channel out_channel)
+    with
+    | _ ->
       Stdlib.print_string "TLS not supported\n";
       `Not_supported
+  ;;
 
   (* The unix getlogin syscall can fail *)
   let getlogin () = Unix.getuid () |> Unix.Passwd.getbyuid_exn >>| fun { name; _ } -> name
@@ -134,6 +139,7 @@ let check_pgdatabase =
 ;;
 
 let connect
+    ?ssl
     ?host
     ?port
     ?user
@@ -150,6 +156,7 @@ let connect
   | None -> Lazy_deferred.force_exn default_unix_domain_socket_dir)
   >>= fun unix_domain_socket_dir ->
   connect
+    ?ssl
     ?host
     ?port
     ?user
@@ -162,6 +169,7 @@ let connect
 ;;
 
 let with_conn
+    ?ssl
     ?host
     ?port
     ?user
@@ -173,6 +181,7 @@ let with_conn
     f
   =
   connect
+    ?ssl
     ?host
     ?port
     ?user

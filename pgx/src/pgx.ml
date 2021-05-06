@@ -531,7 +531,7 @@ module Make (Thread : Io) = struct
 
   (*----- Connection. -----*)
 
-  let attempt_tls_upgrade ({ ichan ; chan ; _ } as conn) =
+  let attempt_tls_upgrade ?(ssl = `Auto) ({ ichan; chan; _ } as conn) =
     (* To initiate an SSL-encrypted connection, the frontend initially sends an SSLRequest message rather than a
        StartupMessage. The server then responds with a single byte containing S or N, indicating that it is willing
        or unwilling to perform SSL, respectively. The frontend might close the connection at this point if it is
@@ -540,28 +540,37 @@ module Make (Thread : Io) = struct
        StartupMessage. In this case the StartupMessage and all subsequent data will be SSL-encrypted. To continue
        after N, send the usual StartupMessage and proceed without encryption.
        See https://www.postgresql.org/docs/9.3/protocol-flow.html#AEN100021 *)
-    match Io.upgrade_ssl with
-    | `Not_supported -> return conn
-    | `Supported upgrade_ssl ->
-      Stdlib.print_string "Attempting STARTLS\n";
-      let msg = Message_out.SSLRequest in
-      send_message conn msg
-      >>= fun () ->
-      flush chan
-      >>= fun () ->
-      input_char ichan
-      >>= (function
-      | 'S' ->
-        Stdlib.print_string "Upgrading to TLS\n";
-        upgrade_ssl ichan chan
-        >>= fun (ichan, chan) ->
-        return { conn with ichan ; chan }
-      | 'N' ->
-        Stdlib.print_string "Not upgrading\n";
-        return conn
-      | _c -> assert false)
+    match ssl with
+    | `No -> return conn
+    | (`Auto | `Always _) as ssl ->
+      (match Io.upgrade_ssl with
+      | `Not_supported -> return conn
+      | `Supported upgrade_ssl ->
+        Stdlib.print_string "Attempting STARTLS\n";
+        let msg = Message_out.SSLRequest in
+        send_message conn msg
+        >>= fun () ->
+        flush chan
+        >>= fun () ->
+        input_char ichan
+        >>= (function
+        | 'S' ->
+          Stdlib.print_string "Upgrading to TLS\n";
+          let ssl_config =
+            match ssl with
+            | `Auto -> None
+            | `Always ssl_config -> Some ssl_config
+          in
+          upgrade_ssl ?ssl_config ichan chan
+          >>= fun (ichan, chan) -> return { conn with ichan; chan }
+        | 'N' ->
+          Stdlib.print_string "Not upgrading\n";
+          return conn
+        | _c -> assert false))
+  ;;
 
   let connect
+      ?ssl
       ?host
       ?port
       ?user
@@ -636,7 +645,7 @@ module Make (Thread : Io) = struct
       ; prepared_num = Int64.of_int 0
       }
     in
-    attempt_tls_upgrade conn
+    attempt_tls_upgrade ?ssl conn
     >>= fun conn ->
     (* Send the StartUpMessage.  NB. At present we do not support SSL. *)
     let msg = Message_out.Startup_message { Message_out.user; database } in
@@ -703,6 +712,7 @@ module Make (Thread : Io) = struct
   ;;
 
   let with_conn
+      ?ssl
       ?host
       ?port
       ?user
@@ -714,6 +724,7 @@ module Make (Thread : Io) = struct
       f
     =
     connect
+      ?ssl
       ?host
       ?port
       ?user
