@@ -87,14 +87,11 @@ module Thread = struct
   let upgrade_ssl =
     try
       let default_config = Conduit_async.V1.Conduit_async_ssl.Ssl_config.configure () in
-      Stdlib.print_string "TLS supported\n";
       `Supported
         (fun ?(ssl_config = default_config) in_channel out_channel ->
           Conduit_async.V1.Conduit_async_ssl.ssl_connect ssl_config in_channel out_channel)
     with
-    | _ ->
-      Stdlib.print_string "TLS not supported\n";
-      `Not_supported
+    | _ -> `Not_supported
   ;;
 
   (* The unix getlogin syscall can fail *)

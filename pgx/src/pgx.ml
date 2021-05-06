@@ -544,9 +544,13 @@ module Make (Thread : Io) = struct
     | `No -> return conn
     | (`Auto | `Always _) as ssl ->
       (match Io.upgrade_ssl with
-      | `Not_supported -> return conn
+      | `Not_supported ->
+        debug
+          "TLS-support is not compiled into this Pgx library, not attempting to upgrade"
+        >>| fun () -> conn
       | `Supported upgrade_ssl ->
-        Stdlib.print_string "Attempting STARTLS\n";
+        debug "Request SSL upgrade from server"
+        >>= fun () ->
         let msg = Message_out.SSLRequest in
         send_message conn msg
         >>= fun () ->
@@ -555,7 +559,8 @@ module Make (Thread : Io) = struct
         input_char ichan
         >>= (function
         | 'S' ->
-          Stdlib.print_string "Upgrading to TLS\n";
+          debug "Server supports TLS, attempting to upgrade"
+          >>= fun () ->
           let ssl_config =
             match ssl with
             | `Auto -> None
@@ -563,10 +568,12 @@ module Make (Thread : Io) = struct
           in
           upgrade_ssl ?ssl_config ichan chan
           >>= fun (ichan, chan) -> return { conn with ichan; chan }
-        | 'N' ->
-          Stdlib.print_string "Not upgrading\n";
-          return conn
-        | _c -> assert false))
+        | 'N' -> debug "Server does not support TLS, not upgrading" >>| fun () -> conn
+        | c ->
+          fail_msg
+            "Got unexpected response '%c' from server after SSLRequest message. Response \
+             should always be 'S' or 'N'."
+            c))
   ;;
 
   let connect
@@ -619,7 +626,6 @@ module Make (Thread : Io) = struct
         (try Inet (Sys.getenv "PGHOST", port) with
         | Not_found ->
           (* use Unix domain socket. *)
-          Stdlib.print_string "Using Unix socket\n";
           let path = sprintf "%s/.s.PGSQL.%d" unix_domain_socket_dir port in
           Unix path)
     in
