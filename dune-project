@@ -21,7 +21,7 @@
  (name pgx)
  (synopsis "Pure-OCaml PostgreSQL client library")
  (description
-   "PGX is a pure-OCaml PostgreSQL client library, supporting Async, LWT, or synchronous operations.")
+  "PGX is a pure-OCaml PostgreSQL client library, supporting Async, LWT, or synchronous operations.")
  (depends
   (alcotest
    (and
@@ -52,9 +52,9 @@
 (package
  (name pgx_unix)
  (synopsis
-   "PGX using the standard library's Unix module for IO (synchronous)")
+  "PGX using the standard library's Unix module for IO (synchronous)")
  (description
-   "PGX using the standard library's Unix module for IO (synchronous)")
+  "PGX using the standard library's Unix module for IO (synchronous)")
  (depends
   (alcotest
    (and
@@ -82,6 +82,7 @@
    (>= "v0.13.0"))
   (async_unix
    (>= "v0.13.0"))
+  async_ssl
   (base64
    (and
     :with-test
@@ -92,9 +93,7 @@
   (pgx
    (= :version))
   (pgx_value_core
-   (= :version)))
-  (depopts
-   async_ssl))
+   (= :version))))
 
 (package
  (name pgx_lwt)
