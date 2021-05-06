@@ -49,4 +49,5 @@ module Value = Pgx_value
 
 module type S = Pgx_intf.S
 
-module Make (Thread : Io) : S with type 'a Io.t = 'a Thread.t
+module Make (Thread : Io) :
+  S with type 'a Io.t = 'a Thread.t and type Io.ssl_config = Thread.ssl_config

@@ -1,23 +1,13 @@
 (** Async based Postgres client based on Pgx. *)
 open Async_kernel
 
-include Pgx.S with type 'a Io.t = 'a Deferred.t
+include
+  Pgx.S
+    with type 'a Io.t = 'a Deferred.t
+     and type Io.ssl_config = Conduit_async.Ssl.config
 
 (* for testing purposes *)
 module Thread : Pgx.Io with type 'a t = 'a Deferred.t
-
-val with_conn
-  :  ?ssl:[ `Auto | `No | `Always of Io.ssl_config ]
-  -> ?host:string
-  -> ?port:int
-  -> ?user:string
-  -> ?password:string
-  -> ?database:string
-  -> ?unix_domain_socket_dir:string
-  -> ?verbose:int
-  -> ?max_message_length:int
-  -> (t -> 'a Deferred.t)
-  -> 'a Deferred.t
 
 (** Like [execute] but returns a pipe so you can operate on the results before they have all returned.
     Note that [execute_iter] and [execute_fold] can perform significantly better because they don't have
