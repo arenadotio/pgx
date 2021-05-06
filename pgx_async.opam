@@ -19,9 +19,7 @@ depends: [
   "pgx" {= version}
   "pgx_value_core" {= version}
 ]
-depopts: [
-  "async_ssl"
-]
+depopts: ["async_ssl"]
 build: [
   ["dune" "subst"] {pinned}
   [

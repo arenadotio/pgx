@@ -86,12 +86,15 @@
    (and
     :with-test
     (>= 3.0.0)))
+  conduit-async
   (ocaml
    (>= 4.08))
   (pgx
    (= :version))
   (pgx_value_core
-   (= :version))))
+   (= :version)))
+  (depopts
+   async_ssl))
 
 (package
  (name pgx_lwt)
