@@ -545,6 +545,12 @@ module Make (Thread : Io) = struct
     | (`Auto | `Always _) as ssl ->
       (match Io.upgrade_ssl with
       | `Not_supported ->
+        (match ssl with
+        | `Always _ ->
+          failwith
+            "TLS support is not compiled into this Pgx library but ~ssl was set to \
+             `Always"
+        | _ -> ());
         debug
           "TLS-support is not compiled into this Pgx library, not attempting to upgrade"
         >>| fun () -> conn
