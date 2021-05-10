@@ -7,4 +7,4 @@ end
 
 include Pgx_test.Make_tests (Pgx_lwt_unix) (Alcotest_io)
 
-let () = run_tests ()
+let () = run_tests ~library_name:"pgx_lwt_unix"

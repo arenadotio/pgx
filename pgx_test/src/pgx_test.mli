@@ -1,5 +1,5 @@
 module type S = sig
-  val run_tests : unit -> unit
+  val run_tests : library_name:string -> unit
 end
 
 module type ALCOTEST_IO = sig
