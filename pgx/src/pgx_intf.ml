@@ -5,6 +5,7 @@ module type S = sig
 
   module Io : sig
     type 'a t
+    type ssl_config
 
     val return : 'a -> 'a t
     val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
@@ -22,7 +23,8 @@ module type S = sig
       possible denial of service.  You may want to set this to a smaller
       size to avoid this happening. *)
   val connect
-    :  ?host:string
+    :  ?ssl:[ `Auto | `No | `Always of Io.ssl_config ]
+    -> ?host:string
     -> ?port:int
     -> ?user:string
     -> ?password:string
@@ -42,7 +44,8 @@ module type S = sig
       [close]. This is the preferred way to use this library since it cleans up
       after itself. *)
   val with_conn
-    :  ?host:string
+    :  ?ssl:[ `Auto | `No | `Always of Io.ssl_config ]
+    -> ?host:string
     -> ?port:int
     -> ?user:string
     -> ?password:string

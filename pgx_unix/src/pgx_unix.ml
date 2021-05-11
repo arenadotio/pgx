@@ -55,6 +55,9 @@ module Simple_thread = struct
     Unix.open_connection std_socket
   ;;
 
+  type ssl_config
+
+  let upgrade_ssl = `Not_supported
   let output_char = output_char
   let output_binary_int = output_binary_int
   let output_string = output_string

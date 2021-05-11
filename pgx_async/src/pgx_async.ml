@@ -73,19 +73,25 @@ module Thread = struct
   let close_in = Reader.close
 
   let open_connection sockaddr =
-    let get_reader_writer socket =
-      let fd = Socket.fd socket in
-      Reader.create fd, Writer.create fd
-    in
     match sockaddr with
-    | Unix path ->
-      let unix_sockaddr = Tcp.Where_to_connect.of_unix_address (`Unix path) in
-      Tcp.connect_sock unix_sockaddr >>| get_reader_writer
+    | Unix path -> Conduit_async.connect (`Unix_domain_socket path)
     | Inet (host, port) ->
-      let inet_sockaddr =
-        Tcp.Where_to_connect.of_host_and_port (Host_and_port.create ~host ~port)
-      in
-      Tcp.connect_sock inet_sockaddr >>| get_reader_writer
+      Uri.make ~host ~port ()
+      |> Conduit_async.V3.resolve_uri
+      >>= Conduit_async.V3.connect
+      >>| fun (_socket, in_channel, out_channel) -> in_channel, out_channel
+  ;;
+
+  type ssl_config = Conduit_async.Ssl.config
+
+  let upgrade_ssl =
+    try
+      let default_config = Conduit_async.V1.Conduit_async_ssl.Ssl_config.configure () in
+      `Supported
+        (fun ?(ssl_config = default_config) in_channel out_channel ->
+          Conduit_async.V1.Conduit_async_ssl.ssl_connect ssl_config in_channel out_channel)
+    with
+    | _ -> `Not_supported
   ;;
 
   (* The unix getlogin syscall can fail *)
@@ -130,6 +136,7 @@ let check_pgdatabase =
 ;;
 
 let connect
+    ?ssl
     ?host
     ?port
     ?user
@@ -146,6 +153,7 @@ let connect
   | None -> Lazy_deferred.force_exn default_unix_domain_socket_dir)
   >>= fun unix_domain_socket_dir ->
   connect
+    ?ssl
     ?host
     ?port
     ?user
@@ -158,6 +166,7 @@ let connect
 ;;
 
 let with_conn
+    ?ssl
     ?host
     ?port
     ?user
@@ -169,6 +178,7 @@ let with_conn
     f
   =
   connect
+    ?ssl
     ?host
     ?port
     ?user
