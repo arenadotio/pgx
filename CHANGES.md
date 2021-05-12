@@ -1,3 +1,28 @@
+## 2.0 (2021-05-12)
+
+### Breaking changes
+
+* The Pgx module is now wrapped, which means `Pgx_aux`, `Types`, `Access`, etc. aren't added to the global scope.
+  The main result of this is that `Pgx_value` now needs to be accessed as `Pgx.Value`.
+  (https://github.com/arenadotio/pgx/pull/103)
+* `Pgx_async.connect` and `with_conn` now have an additional optional `?ssl` argument (see below).
+
+### Added
+
+* Pgx_async now supports TLS connections using Conduit_async. This is enabled by default and can be controlled with the
+  new `?ssl` argument to `connect` and `with_conn`.
+  (https://github.com/arenadotio/pgx/pull/108)
+
+### Fixed
+
+* Improved message for authentication errors. Previously these raised `Pgx_eof`, and now they raise
+  `PostgreSQL_Error("Failed to authenticate with postgres server", additional details ...)`.
+  (https://github.com/arenadotio/pgx/pull/105)
+
+### Changed
+
+* Support new Mirage-conduit timeout argument (https://github.com/arenadotio/pgx/pull/95).
+
 ## 1.0 (2020-05-08)
 
 ### Breaking changes
