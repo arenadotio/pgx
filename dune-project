@@ -6,7 +6,7 @@
 
 (generate_opam_files true)
 
-(license "LGPL-2 with OCaml linking exception")
+(license "LGPL-2.0-only with OCaml-LGPL-linking-exception")
 
 (maintainers "Arena Developers <silver-snakes@arena.io>")
 
