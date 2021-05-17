@@ -120,7 +120,6 @@
    (and
     :with-test
     (>= 3.0.0)))
-  lwt
   (ocaml
    (>= 4.08))
   (pgx
