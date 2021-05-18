@@ -6,7 +6,7 @@
 
 (generate_opam_files true)
 
-(license "LGPL-2 with OCaml linking exception")
+(license "LGPL-2.0-only with OCaml-LGPL-linking-exception")
 
 (maintainers "Arena Developers <silver-snakes@arena.io>")
 
@@ -44,7 +44,8 @@
    (>= v0.13.0))
   (ppx_sexp_conv
    (>= v0.13.0))
-  re
+  (re
+   (>= 1.5.0))
   (sexplib0
    (>= v0.13.0))
   uuidm))
@@ -87,7 +88,8 @@
    (and
     :with-test
     (>= 3.0.0)))
-  conduit-async
+  (conduit-async
+   (>= 1.5.0))
   (ocaml
    (>= 4.08))
   (pgx
@@ -120,7 +122,6 @@
    (and
     :with-test
     (>= 3.0.0)))
-  lwt
   (ocaml
    (>= 4.08))
   (pgx
