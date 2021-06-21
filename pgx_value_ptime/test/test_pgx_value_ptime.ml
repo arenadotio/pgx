@@ -44,7 +44,7 @@ let date_tests =
   ]
 
 
-(* Show only the human-readable version of the date. *)
+(* Show only the human-readable version of the date-time. *)
 let check_time =
   let compare_times (t1, o1) (t2, o2) =
     let tf1 = Ptime.to_float_s t1
@@ -64,7 +64,7 @@ let test_time_of_string _ =
   check_time "time with tz offset parses" (pt, ~-4 * hour) (Value.time_of_string "1970-01-01T08:00:00-04:00");
   let pt = to_pt (12. *. hourf +. 0.12345) in
   check_time "a time with milliseconds parses" (pt, 0) (Value.time_of_string "1970-01-01T12:00:00.12345Z");
-  (* On linux run TZ='UTC' date -d @1458086118 to confirm this conversion is correct.*)
+  (* On linux, one can run "TZ='UTC' date -d @1458086118" in a shell to confirm this conversion is correct.*)
   check_time "a recent time parses" (to_pt 1458086118., ~-4 * hour) (Value.time_of_string "2016-03-15 19:55:18-04:00")
 
 
