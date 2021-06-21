@@ -21,6 +21,7 @@ jobs:
           command: |
             opam remote remove default --all
             opam remote add default https://opam.ocaml.org
+            opam update
       - run:
           name: Pin packages
           command: ./pin_dev.sh
