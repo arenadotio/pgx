@@ -1,0 +1,4 @@
+(tests
+ (names test_pgx_value_ptime)
+ (package pgx_value_ptime)
+ (libraries alcotest pgx_value_ptime))

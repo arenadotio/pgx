@@ -146,6 +146,22 @@
    (= :version))))
 
 (package
+ (name pgx_value_ptime)
+ (synopsis "Pgx_value converters for Ptime types")
+ (description "Pgx_value converters for Ptime types")
+ (depends
+  (alcotest
+   (and
+    :with-test
+    (>= 1.0.0)))
+  (ptime
+   (>= 0.8.3))
+  (ocaml
+   (>= 4.08))
+  (pgx
+   (= :version))))
+
+(package
  (name pgx_lwt_mirage)
  (synopsis "Pgx using Lwt on Mirage for IO")
  (description "Pgx using Lwt on Mirage for IO")
