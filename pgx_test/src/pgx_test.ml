@@ -611,6 +611,30 @@ struct
                     (Some expect)
                     (Pgx.Value.to_string result)
                 | _ -> assert false))
+      ; Alcotest_io.test_case "transaction sequencing" `Slow (fun () ->
+            with_conn (fun db ->
+                simple_query db "CREATE TEMPORARY TABLE this_test (id int)"
+                >>= fun _ ->
+                (* Inside of this transaction, we're goign to insert a row, sleep, then delete it.
+                   If the transaction logic is working right, the SELECT query we run in parallel won't
+                   be able to run until that transaction finishes, so it won't ever see the temporary row *)
+                let in_transaction_deferred =
+                  with_transaction db (fun db ->
+                      simple_query db "INSERT INTO this_test VALUES (1)"
+                      >>= fun _ ->
+                      simple_query db "SELECT pg_sleep(1)"
+                      >>= fun _ -> simple_query db "DELETE FROM this_test WHERE id = 1")
+                in
+                simple_query db "SELECT pg_sleep(0.1)"
+                >>= fun _ ->
+                execute_map db "SELECT id FROM this_test" ~f:(function
+                    | [ id ] -> Pgx.Value.to_int_exn id |> return
+                    | _ -> assert false)
+                >>| Alcotest.(check (list int))
+                      "Parallel query should not see rows that only exist inside the \
+                       transaction"
+                      []
+                >>= fun () -> in_transaction_deferred >>| fun _ -> ()))
       ]
     in
     if force_tests || have_pg_config
