@@ -37,18 +37,19 @@ let make_test name typ to_value of_value of_value_exn values fail_values =
           "non-null conversion"
           (Conversion_failure "Expected not-null but got null")
           (fun () -> ignore (of_value_exn None)))
-    :: List.map
-         (fun str ->
-           let test_name = sprintf "bad conversion - %s" str in
-           let value = of_string str in
-           Alcotest.test_case test_name `Quick
-           @@ fun () ->
-           try
-             of_value value |> ignore;
-             Alcotest.fail "Expected Conversion_failure"
-           with
-           | Conversion_failure _ -> ())
-         fail_values
+    ::
+    List.map
+      (fun str ->
+        let test_name = sprintf "bad conversion - %s" str in
+        let value = of_string str in
+        Alcotest.test_case test_name `Quick
+        @@ fun () ->
+        try
+          of_value value |> ignore;
+          Alcotest.fail "Expected Conversion_failure"
+        with
+        | Conversion_failure _ -> ())
+      fail_values
   in
   let success_opt_tests =
     None :: List.map (fun v -> Some v) values

@@ -38,12 +38,12 @@ let of_binary b =
 let to_binary' = function
   | "" -> ""
   | t ->
-    ((* Skip if not encoded as hex *)
-    try
-      if String.sub t 0 2 <> "\\x"
-      then t (* Decode if encoded as hex *)
-      else `Hex (String.sub t 2 (String.length t - 2)) |> Hex.to_string
-    with
+    (* Skip if not encoded as hex *)
+    (try
+       if String.sub t 0 2 <> "\\x"
+       then t (* Decode if encoded as hex *)
+       else `Hex (String.sub t 2 (String.length t - 2)) |> Hex.to_string
+     with
     | exn -> convert_failure ~hint:(Printexc.to_string exn) "binary" t)
 ;;
 
