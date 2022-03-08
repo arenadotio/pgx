@@ -172,14 +172,13 @@
   logs
   mirage-channel
   (conduit-mirage
-   (and
-    (>= 2.2.0)
-    (< 2.3.0)))
+    (>= 2.3.0))
   dns-client
   mirage-random
   mirage-time
   mirage-clock
-  mirage-stack
+  (tcpip
+    (>= 7.0.0))
   (pgx
    (= :version))
   (pgx_lwt

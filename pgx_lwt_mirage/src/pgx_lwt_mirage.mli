@@ -21,6 +21,6 @@ module Make
     (RANDOM : Mirage_random.S)
     (TIME : Mirage_time.S)
     (CLOCK : Mirage_clock.MCLOCK)
-    (STACK : Mirage_stack.V4) : sig
+    (STACK : Tcpip.Stack.V4) : sig
   val connect : STACK.t -> (module Pgx_lwt.S)
 end
