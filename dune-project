@@ -173,7 +173,8 @@
   mirage-channel
   (conduit-mirage
     (>= 2.3.0))
-  dns-client
+  (dns-client
+    (>= 6.0.0))
   mirage-random
   mirage-time
   mirage-clock

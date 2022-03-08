@@ -27,9 +27,10 @@ module Make
     (RANDOM : Mirage_random.S)
     (TIME : Mirage_time.S)
     (MCLOCK : Mirage_clock.MCLOCK)
-    (STACK : Mirage_stack.V4) =
+    (PCLOCK : Mirage_clock.PCLOCK)
+    (STACK : Tcpip.Stack.V4V6) =
 struct
-  module Channel = Mirage_channel.Make (STACK.TCPV4)
+  module Channel = Mirage_channel.Make (STACK.TCP)
 
   module Thread = struct
     type sockaddr =
@@ -85,7 +86,7 @@ struct
     let getlogin () = Lwt.fail_with "Running under MirageOS. getlogin not available."
   end
 
-  module Dns = Dns_client_mirage.Make (RANDOM) (TIME) (MCLOCK) (STACK)
+  module Dns = Dns_client_mirage.Make (RANDOM) (TIME) (MCLOCK) (PCLOCK) (STACK)
 
   type sockaddr = Thread.sockaddr =
     | Unix of string
