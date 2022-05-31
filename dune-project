@@ -1,6 +1,4 @@
-(lang dune 1.11)
-
-(using fmt 1.1)
+(lang dune 3.2)
 
 (name pgx)
 
@@ -32,7 +30,7 @@
     :dev
     (>= 2.0.0)))
   (dune
-   (>= 1.11))
+   (>= 3.2))
   hex
   ipaddr
   (ocaml
