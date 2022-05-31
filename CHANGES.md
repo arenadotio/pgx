@@ -1,6 +1,7 @@
 ## 2.1 (unreleased)
 ### Breaking changes
 
+* Missing SASL authentication impl provides an error instead of hanging (https://github.com/arenadotio/pgx/pull/122).
 * pgx_lwt_mirage now requires conduit 2.3 instead of 2.2 (https://github.com/arenadotio/pgx/pull/117).
 
 ## 2.0 (2021-05-12)
