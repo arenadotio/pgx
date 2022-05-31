@@ -69,6 +69,7 @@ module Message_in = struct
     | AuthenticationCryptPassword of string
     | AuthenticationMD5Password of string
     | AuthenticationSCMCredential
+    | AuthenticationSASLCredential
     | BackendKeyData of int32 * int32
     | BindComplete
     | CloseComplete
@@ -155,6 +156,7 @@ module Message_in = struct
         | 4l -> AuthenticationCryptPassword (get_n_bytes 2)
         | 5l -> AuthenticationMD5Password (get_n_bytes 4)
         | 6l -> AuthenticationSCMCredential
+        | 10l -> AuthenticationSASLCredential
         | _ -> UnknownMessage (typ, msg))
       | 'H' ->
         let format_code_to_format = function
@@ -700,6 +702,8 @@ module Make (Thread : Io) = struct
         loop (Some (Message_out.Password password))
       | Message_in.AuthenticationSCMCredential ->
         fail_msg "Pgx: SCM Credential authentication not supported"
+      | Message_in.AuthenticationSASLCredential ->
+        fail_msg "Pgx: SASL Credential authentication not supported"
       | Message_in.ErrorResponse err ->
         raise (PostgreSQL_Error ("Failed to authenticate with postgres server", err))
       | Message_in.NoticeResponse _ ->
