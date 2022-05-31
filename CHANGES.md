@@ -1,4 +1,6 @@
-## 2.1 (unreleased)
+## 2.2 (unreleased)
+
+## 2.1 (2022-05-31)
 ### Breaking changes
 
 * Missing SASL authentication impl provides an error instead of hanging (https://github.com/arenadotio/pgx/pull/122).
