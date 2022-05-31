@@ -5,3 +5,4 @@ _esy
 .merlin
 esy.lock
 node_modules
+_opam
