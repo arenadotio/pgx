@@ -33,6 +33,7 @@
    (>= 3.2))
   hex
   ipaddr
+  camlp-streams
   (ocaml
    (>= 4.08))
   (odoc :with-doc)
