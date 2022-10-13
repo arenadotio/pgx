@@ -15,6 +15,7 @@ depends: [
   "dune" {>= "3.2" & >= "3.2"}
   "hex"
   "ipaddr"
+  "camlp-streams"
   "ocaml" {>= "4.08"}
   "odoc" {with-doc}
   "ppx_compare" {>= "v0.13.0"}
