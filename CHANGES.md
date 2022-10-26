@@ -1,4 +1,7 @@
-## 2.2 (unreleased)
+## 2.3 (unreleased)
+
+## 2.2 (2022-10-26)
+* Support ocaml 5.0 deprecations (https://github.com/arenadotio/pgx/pull/129)
 
 ## 2.1 (2022-05-31)
 ### Breaking changes
