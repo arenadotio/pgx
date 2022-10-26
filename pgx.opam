@@ -12,7 +12,7 @@ bug-reports: "https://github.com/arenadotio/pgx/issues"
 depends: [
   "alcotest" {with-test & >= "1.0.0"}
   "bisect_ppx" {dev & >= "2.0.0"}
-  "dune" {>= "1.11"}
+  "dune" {>= "3.2" & >= "3.2"}
   "hex"
   "ipaddr"
   "ocaml" {>= "4.08"}
@@ -25,7 +25,7 @@ depends: [
   "uuidm"
 ]
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   [
     "dune"
     "build"
